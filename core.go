@@ -123,6 +123,7 @@ func (c *core) do(ctx context.Context, method, route string, pathParams map[stri
 		// net/http replays a request that carries Idempotency-Key after a broken
 		// connection, so the header goes only on operations that dedupe on it.
 		req.Header.Del("Idempotency-Key")
+		req.Header.Del("X-Idempotency-Key")
 		if idempotent && key != "" {
 			req.Header.Set("Idempotency-Key", key)
 		}
@@ -131,6 +132,21 @@ func (c *core) do(ctx context.Context, method, route string, pathParams map[stri
 		if err == nil {
 			data, err = io.ReadAll(res.Body)
 			res.Body.Close()
+			if err != nil && retryStatus[res.StatusCode] {
+				// The status line arrived, so its retry rules apply, not the connection rules.
+				cancel()
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+				wait, ok := retryDelay(res, attempt, retryable)
+				if !ok || attempt >= maxRetries {
+					return &ConnectionError{Err: err}
+				}
+				if err := sleep(ctx, wait); err != nil {
+					return err
+				}
+				continue
+			}
 		}
 		cancel()
 		if err != nil {

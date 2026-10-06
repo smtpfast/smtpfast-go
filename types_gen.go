@@ -327,7 +327,7 @@ type CreateContactPropertyParams struct {
 	Key  string `json:"key"`
 	Type string `json:"type"`
 	// FallbackValue: Used when a contact has no value
-	FallbackValue any `json:"fallback_value,omitzero"`
+	FallbackValue Nullable[any] `json:"fallback_value,omitzero"`
 }
 
 type CreateContactPropertyResponse struct {
@@ -349,12 +349,12 @@ type CreateContactRequest struct {
 }
 
 type CreateInboxDraftParams struct {
-	To      StringList       `json:"to,omitzero"`
-	Cc      StringList       `json:"cc,omitzero"`
-	Bcc     StringList       `json:"bcc,omitzero"`
-	Subject Nullable[string] `json:"subject,omitzero"`
-	HTML    Nullable[string] `json:"html,omitzero"`
-	Text    Nullable[string] `json:"text,omitzero"`
+	To      Nullable[StringList] `json:"to,omitzero"`
+	Cc      Nullable[StringList] `json:"cc,omitzero"`
+	Bcc     Nullable[StringList] `json:"bcc,omitzero"`
+	Subject Nullable[string]     `json:"subject,omitzero"`
+	HTML    Nullable[string]     `json:"html,omitzero"`
+	Text    Nullable[string]     `json:"text,omitzero"`
 	// ThreadID: The thread to reply in. Send with reply_to_email_id.
 	ThreadID *string `json:"thread_id,omitzero"`
 	// ReplyToEmailID: The message to reply to. Send with thread_id.
@@ -435,7 +435,7 @@ type CreateTemplateRequest struct {
 	// Subject: Default subject. Can use variables. A send can override it.
 	Subject Nullable[string] `json:"subject,omitzero"`
 	// ReplyTo: Default Reply-To address or addresses. A send can override it.
-	ReplyTo StringList `json:"reply_to,omitzero"`
+	ReplyTo Nullable[StringList] `json:"reply_to,omitzero"`
 	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}.
 	HTML *string `json:"html,omitzero"`
 	// Text: Plain-text body. When left out, the text part is generated from the HTML at send time. Exactly "" stops that, as in Resend; the email then carries an
@@ -738,7 +738,7 @@ type Inbox struct {
 	EmailAddress *string `json:"email_address,omitzero"`
 	DomainID     *string `json:"domain_id,omitzero"`
 	// ReceivingAddress: Always null: SMTPfast inboxes receive through your own MX record, never a forwarding address.
-	ReceivingAddress any              `json:"receiving_address,omitzero"`
+	ReceivingAddress Nullable[any]    `json:"receiving_address,omitzero"`
 	FromName         Nullable[string] `json:"from_name,omitzero"`
 	// Unread: Threads in the inbox folder with at least one unread message
 	Unread *int64 `json:"unread,omitzero"`
@@ -750,17 +750,17 @@ type Inbox struct {
 }
 
 type InboxDraft struct {
-	Object         *string          `json:"object,omitzero"`
-	ID             *string          `json:"id,omitzero"`
-	Type           *string          `json:"type,omitzero"`
-	To             []string         `json:"to,omitzero"`
-	Cc             []string         `json:"cc,omitzero"`
-	Bcc            []string         `json:"bcc,omitzero"`
-	Subject        Nullable[string] `json:"subject,omitzero"`
-	HTML           Nullable[string] `json:"html,omitzero"`
-	Text           Nullable[string] `json:"text,omitzero"`
-	ThreadID       Nullable[string] `json:"thread_id,omitzero"`
-	ReplyToEmailID Nullable[string] `json:"reply_to_email_id,omitzero"`
+	Object         *string            `json:"object,omitzero"`
+	ID             *string            `json:"id,omitzero"`
+	Type           *string            `json:"type,omitzero"`
+	To             Nullable[[]string] `json:"to,omitzero"`
+	Cc             []string           `json:"cc,omitzero"`
+	Bcc            []string           `json:"bcc,omitzero"`
+	Subject        Nullable[string]   `json:"subject,omitzero"`
+	HTML           Nullable[string]   `json:"html,omitzero"`
+	Text           Nullable[string]   `json:"text,omitzero"`
+	ThreadID       Nullable[string]   `json:"thread_id,omitzero"`
+	ReplyToEmailID Nullable[string]   `json:"reply_to_email_id,omitzero"`
 	// EmailID: The queued email once sent
 	EmailID   Nullable[string] `json:"email_id,omitzero"`
 	CreatedAt *string          `json:"created_at,omitzero"`
@@ -776,16 +776,16 @@ type InboxDraft struct {
 }
 
 type InboxDraftListItem struct {
-	ID             *string          `json:"id,omitzero"`
-	Type           *string          `json:"type,omitzero"`
-	To             []string         `json:"to,omitzero"`
-	Cc             []string         `json:"cc,omitzero"`
-	Bcc            []string         `json:"bcc,omitzero"`
-	Subject        Nullable[string] `json:"subject,omitzero"`
-	Snippet        Nullable[string] `json:"snippet,omitzero"`
-	ThreadID       Nullable[string] `json:"thread_id,omitzero"`
-	ReplyToEmailID Nullable[string] `json:"reply_to_email_id,omitzero"`
-	UpdatedAt      *string          `json:"updated_at,omitzero"`
+	ID             *string            `json:"id,omitzero"`
+	Type           *string            `json:"type,omitzero"`
+	To             Nullable[[]string] `json:"to,omitzero"`
+	Cc             []string           `json:"cc,omitzero"`
+	Bcc            []string           `json:"bcc,omitzero"`
+	Subject        Nullable[string]   `json:"subject,omitzero"`
+	Snippet        Nullable[string]   `json:"snippet,omitzero"`
+	ThreadID       Nullable[string]   `json:"thread_id,omitzero"`
+	ReplyToEmailID Nullable[string]   `json:"reply_to_email_id,omitzero"`
+	UpdatedAt      *string            `json:"updated_at,omitzero"`
 	// CreatedVia: Not in Resend
 	CreatedVia *string `json:"created_via,omitzero"`
 	// CreatedAt: Not in Resend
@@ -1583,21 +1583,21 @@ type Success struct {
 }
 
 type Suppression struct {
-	Object         *string          `json:"object,omitzero"`
-	ID             string           `json:"id"`
-	Email          string           `json:"email"`
-	Reason         string           `json:"reason"`
-	Source         string           `json:"source"`
-	BounceType     Nullable[string] `json:"bounce_type,omitzero"`
-	DiagnosticCode Nullable[string] `json:"diagnostic_code,omitzero"`
-	FeedbackID     Nullable[string] `json:"feedback_id,omitzero"`
-	EmailID        Nullable[string] `json:"email_id,omitzero"`
-	EventID        Nullable[string] `json:"event_id,omitzero"`
-	CreatedAt      string           `json:"created_at"`
-	UpdatedAt      *string          `json:"updated_at,omitzero"`
-	Metadata       map[string]any   `json:"metadata,omitzero"`
-	RelatedEmail   map[string]any   `json:"related_email,omitzero"`
-	RelatedEvent   map[string]any   `json:"related_event,omitzero"`
+	Object         *string                  `json:"object,omitzero"`
+	ID             string                   `json:"id"`
+	Email          string                   `json:"email"`
+	Reason         string                   `json:"reason"`
+	Source         string                   `json:"source"`
+	BounceType     Nullable[string]         `json:"bounce_type,omitzero"`
+	DiagnosticCode Nullable[string]         `json:"diagnostic_code,omitzero"`
+	FeedbackID     Nullable[string]         `json:"feedback_id,omitzero"`
+	EmailID        Nullable[string]         `json:"email_id,omitzero"`
+	EventID        Nullable[string]         `json:"event_id,omitzero"`
+	CreatedAt      string                   `json:"created_at"`
+	UpdatedAt      *string                  `json:"updated_at,omitzero"`
+	Metadata       map[string]any           `json:"metadata,omitzero"`
+	RelatedEmail   Nullable[map[string]any] `json:"related_email,omitzero"`
+	RelatedEvent   Nullable[map[string]any] `json:"related_event,omitzero"`
 }
 
 type SuppressionDeleted struct {
@@ -1651,7 +1651,7 @@ type Template struct {
 	UpdatedAt        *string            `json:"updated_at,omitzero"`
 	From             Nullable[string]   `json:"from,omitzero"`
 	Subject          Nullable[string]   `json:"subject,omitzero"`
-	ReplyTo          []string           `json:"reply_to,omitzero"`
+	ReplyTo          Nullable[[]string] `json:"reply_to,omitzero"`
 	HTML             Nullable[string]   `json:"html,omitzero"`
 	Text             Nullable[string]   `json:"text,omitzero"`
 	Variables        []TemplateVariable `json:"variables,omitzero"`
@@ -1722,9 +1722,9 @@ type TemplateVariable struct {
 	Key  string `json:"key"`
 	Type string `json:"type"`
 	// FallbackValue: Used when a send gives no value. Must match the type. Without one, every send must pass a value for this variable or it answers 422.
-	FallbackValue any     `json:"fallback_value,omitzero"`
-	CreatedAt     *string `json:"created_at,omitzero"`
-	UpdatedAt     *string `json:"updated_at,omitzero"`
+	FallbackValue Nullable[any] `json:"fallback_value,omitzero"`
+	CreatedAt     *string       `json:"created_at,omitzero"`
+	UpdatedAt     *string       `json:"updated_at,omitzero"`
 }
 
 type TestWebhookResponse struct {
@@ -1811,12 +1811,12 @@ type UpdateEmailResponse struct {
 }
 
 type UpdateInboxDraftParams struct {
-	To      StringList       `json:"to,omitzero"`
-	Cc      StringList       `json:"cc,omitzero"`
-	Bcc     StringList       `json:"bcc,omitzero"`
-	Subject Nullable[string] `json:"subject,omitzero"`
-	HTML    Nullable[string] `json:"html,omitzero"`
-	Text    Nullable[string] `json:"text,omitzero"`
+	To      Nullable[StringList] `json:"to,omitzero"`
+	Cc      Nullable[StringList] `json:"cc,omitzero"`
+	Bcc     Nullable[StringList] `json:"bcc,omitzero"`
+	Subject Nullable[string]     `json:"subject,omitzero"`
+	HTML    Nullable[string]     `json:"html,omitzero"`
+	Text    Nullable[string]     `json:"text,omitzero"`
 	// Revision: Only write if the draft is still at this revision. Not in Resend.
 	Revision *int64 `json:"revision,omitzero"`
 }
@@ -1908,7 +1908,7 @@ type UpdateTemplateRequest struct {
 	// Subject: Default subject. Can use variables. A send can override it.
 	Subject Nullable[string] `json:"subject,omitzero"`
 	// ReplyTo: Default Reply-To address or addresses. A send can override it.
-	ReplyTo StringList `json:"reply_to,omitzero"`
+	ReplyTo Nullable[StringList] `json:"reply_to,omitzero"`
 	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}.
 	HTML Nullable[string] `json:"html,omitzero"`
 	// Text: Plain-text body. When left out, the text part is generated from the HTML at send time. Exactly "" stops that, as in Resend; the email then carries an
@@ -1918,8 +1918,8 @@ type UpdateTemplateRequest struct {
 	// PreviewText: Not in Resend. The inbox preview line, put into the email as a hidden first line.
 	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Category: Not in Resend. A label for grouping templates in the dashboard.
-	Category  Nullable[string]   `json:"category,omitzero"`
-	Variables []TemplateVariable `json:"variables,omitzero"`
+	Category  Nullable[string]             `json:"category,omitzero"`
+	Variables Nullable[[]TemplateVariable] `json:"variables,omitzero"`
 	// ExpectedUpdatedAt: Not in Resend. The updated_at you loaded. If the template changed since, the update is refused with 409 revision_conflict instead of overwriting the n
 	ExpectedUpdatedAt *string `json:"expected_updated_at,omitzero"`
 }

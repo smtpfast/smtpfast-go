@@ -254,6 +254,13 @@ func TestReviewFixes(t *testing.T) {
 	if _, err := c.Contacts.Create(ctx, &CreateContactRequest{Email: "b@inbox.dev"}, WithHeader("Idempotency-Key", "x")); err != nil {
 		t.Fatal(err)
 	}
+	c, rec2 := newTestClient()
+	if _, err := c.Contacts.Create(ctx, &CreateContactRequest{Email: "b@inbox.dev"}, WithHeader("X-Idempotency-Key", "x")); err != nil {
+		t.Fatal(err)
+	}
+	if rec2.calls[0].header.Get("X-Idempotency-Key") != "" {
+		t.Fatal("X-Idempotency-Key sent on an operation that does not dedupe")
+	}
 	if rec.calls[0].header.Get("Idempotency-Key") != "" {
 		t.Fatal("Idempotency-Key sent on an operation that does not dedupe")
 	}

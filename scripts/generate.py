@@ -128,7 +128,7 @@ def define(name, schema):
         t, nullable = gotype(prop, name + go_name(key))
         optional = key not in required
         scalar = not (t.startswith("[]") or t.startswith("map[") or t in ("any", "StringList"))
-        if scalar and optional and nullable:
+        if optional and nullable:
             # Three states: absent, null (clears the field), or a value.
             t = f"Nullable[{t}]"
         elif scalar and (optional or nullable):
