@@ -1076,6 +1076,9 @@ func (s *ContactsService) Export(ctx context.Context, query *ExportContactsQuery
 			setQuery(q, "disposable", *query.Disposable)
 		}
 	}
+	if q.Get("format") == "" {
+		q.Set("format", "json")
+	}
 	out := new(ContactList)
 	err := s.core.do(ctx, "GET", "/v1/contacts/export", map[string]string{}, q, nil, false, out, opts)
 	if err != nil {

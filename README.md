@@ -1,6 +1,6 @@
 # SMTPfast Go SDK
 
-The official Go SDK for the [SMTPfast](https://smtpfa.st) API. It covers every endpoint in the API, with a struct for every request and response, and uses only the standard library. It needs Go 1.23+.
+The official Go SDK for the [SMTPfast](https://smtpfa.st) API. It covers every endpoint in the API, with a struct for every request and response, and uses only the standard library. It needs Go 1.24+.
 
 ```bash
 go get github.com/smtpfast/smtpfast-go
@@ -23,7 +23,7 @@ if err != nil {
 fmt.Println(email.ID)
 ```
 
-Every API operation is a method, named after its path: `client.Domains.Verify(ctx, id)`, `client.Contacts.Segments.Add(ctx, contactID, segmentID)`, `client.Inboxes.Threads.Emails.Reply(ctx, inboxID, threadID, emailID, params)`. Path parameters come first, then the request body, then the query struct, then options. Optional fields are pointers; `smtpfast.String`, `smtpfast.Int` and `smtpfast.Bool` make them.
+Every API operation is a method, named after its path: `client.Domains.Verify(ctx, id)`, `client.Contacts.Segments.Add(ctx, contactID, segmentID)`, `client.Inboxes.Threads.Emails.Reply(ctx, inboxID, threadID, emailID, params)`. Path parameters come first, then the request body, then the query struct, then options. Optional fields are pointers; `smtpfast.String`, `smtpfast.Int` and `smtpfast.Bool` make them. A field that is optional and can be null is a `smtpfast.Nullable[T]`: leave it out, set `smtpfast.Value(x)`, or send `smtpfast.Null[T]()` to clear it. An empty list that you set is sent, so it clears the list.
 
 ## Options
 

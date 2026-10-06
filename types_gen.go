@@ -4,27 +4,27 @@ package smtpfast
 
 // APIKey: List and update responses also carry the same values in camelCase (keyPrefix, createdAt, lastUsedAt, revokedAt, expiresAt, grantExpiresAt) for older c
 type APIKey struct {
-	ID         string   `json:"id"`
-	Name       string   `json:"name"`
-	Prefix     string   `json:"prefix"`
-	Scopes     []string `json:"scopes"`
-	CreatedAt  string   `json:"created_at"`
-	LastUsedAt *string  `json:"last_used_at,omitempty"`
-	RevokedAt  *string  `json:"revoked_at,omitempty"`
+	ID         string           `json:"id"`
+	Name       string           `json:"name"`
+	Prefix     string           `json:"prefix"`
+	Scopes     []string         `json:"scopes"`
+	CreatedAt  string           `json:"created_at"`
+	LastUsedAt Nullable[string] `json:"last_used_at,omitzero"`
+	RevokedAt  Nullable[string] `json:"revoked_at,omitzero"`
 	// ExpiresAt: Set for connected-app keys, which rotate.
-	ExpiresAt *string `json:"expires_at,omitempty"`
+	ExpiresAt Nullable[string] `json:"expires_at,omitzero"`
 	// GrantExpiresAt: When a connected app's grant ends.
-	GrantExpiresAt *string `json:"grant_expires_at,omitempty"`
+	GrantExpiresAt Nullable[string] `json:"grant_expires_at,omitzero"`
 }
 
 // APIKeyCreated: Returned when a new API key is created. The key field contains the full secret and is only shown once.
 type APIKeyCreated struct {
-	ID        *string  `json:"id,omitempty"`
-	Name      *string  `json:"name,omitempty"`
-	Key       *string  `json:"key,omitempty"`
-	Prefix    *string  `json:"prefix,omitempty"`
-	Scopes    []string `json:"scopes,omitempty"`
-	CreatedAt *string  `json:"created_at,omitempty"`
+	ID        *string  `json:"id,omitzero"`
+	Name      *string  `json:"name,omitzero"`
+	Key       *string  `json:"key,omitzero"`
+	Prefix    *string  `json:"prefix,omitzero"`
+	Scopes    []string `json:"scopes,omitzero"`
+	CreatedAt *string  `json:"created_at,omitzero"`
 }
 
 type AddDomainRequest struct {
@@ -38,81 +38,81 @@ type AddSuppressionsBatchParams struct {
 
 type Analytics struct {
 	// Total: Every email on the account, whatever its status
-	Total *int64 `json:"total,omitempty"`
+	Total *int64 `json:"total,omitzero"`
 	// Sent: Emails that went out (sent, delivered, opened, clicked, bounced or complained). The rates are worked out against this.
-	Sent *int64 `json:"sent,omitempty"`
+	Sent *int64 `json:"sent,omitzero"`
 	// Today: Emails sent in the last 24 hours
-	Today *int64 `json:"today,omitempty"`
+	Today *int64 `json:"today,omitzero"`
 	// ThisWeek: Emails sent in the last 7 days
-	ThisWeek *int64 `json:"thisWeek,omitempty"`
+	ThisWeek *int64 `json:"thisWeek,omitzero"`
 	// Delivered: Accepted by the receiving server, including those later opened or clicked
-	Delivered  *int64 `json:"delivered,omitempty"`
-	Bounced    *int64 `json:"bounced,omitempty"`
-	Complained *int64 `json:"complained,omitempty"`
+	Delivered  *int64 `json:"delivered,omitzero"`
+	Bounced    *int64 `json:"bounced,omitzero"`
+	Complained *int64 `json:"complained,omitzero"`
 	// Failed: Never sent because of an error
-	Failed *int64 `json:"failed,omitempty"`
+	Failed *int64 `json:"failed,omitzero"`
 	// Pending: Scheduled, queued or sending; not counted in any rate yet
-	Pending  *int64 `json:"pending,omitempty"`
-	Canceled *int64 `json:"canceled,omitempty"`
+	Pending  *int64 `json:"pending,omitzero"`
+	Canceled *int64 `json:"canceled,omitzero"`
 	// AwaitingReport: Sent, with no delivery or bounce report yet; not counted in the rates
-	AwaitingReport *int64 `json:"awaitingReport,omitempty"`
+	AwaitingReport *int64 `json:"awaitingReport,omitzero"`
 	// DeliveryRate: (delivered + complained) / (sent - awaitingReport), as a percentage
-	DeliveryRate *float64 `json:"deliveryRate,omitempty"`
+	DeliveryRate *float64 `json:"deliveryRate,omitzero"`
 	// BounceRate: bounced / (sent - awaitingReport), as a percentage
-	BounceRate *float64 `json:"bounceRate,omitempty"`
+	BounceRate *float64 `json:"bounceRate,omitzero"`
 	// Daily: Last 30 days, bucketed by the UTC day each email was sent
-	Daily []AnalyticsDailyItem `json:"daily,omitempty"`
-	Usage *AnalyticsUsage      `json:"usage,omitempty"`
+	Daily []AnalyticsDailyItem `json:"daily,omitzero"`
+	Usage *AnalyticsUsage      `json:"usage,omitzero"`
 	// Window: Present when days or domain is passed
-	Window *AnalyticsWindow `json:"window,omitempty"`
+	Window *AnalyticsWindow `json:"window,omitzero"`
 }
 
 type AnalyticsDailyItem struct {
-	Date      *string `json:"date,omitempty"`
-	Sent      *int64  `json:"sent,omitempty"`
-	Delivered *int64  `json:"delivered,omitempty"`
-	Bounced   *int64  `json:"bounced,omitempty"`
+	Date      *string `json:"date,omitzero"`
+	Sent      *int64  `json:"sent,omitzero"`
+	Delivered *int64  `json:"delivered,omitzero"`
+	Bounced   *int64  `json:"bounced,omitzero"`
 }
 
 type AnalyticsUsage struct {
-	Period    *string `json:"period,omitempty"`
-	Sent      *int64  `json:"sent,omitempty"`
-	Delivered *int64  `json:"delivered,omitempty"`
-	Bounced   *int64  `json:"bounced,omitempty"`
-	Limit     *int64  `json:"limit,omitempty"`
-	Tier      *string `json:"tier,omitempty"`
+	Period    *string `json:"period,omitzero"`
+	Sent      *int64  `json:"sent,omitzero"`
+	Delivered *int64  `json:"delivered,omitzero"`
+	Bounced   *int64  `json:"bounced,omitzero"`
+	Limit     *int64  `json:"limit,omitzero"`
+	Tier      *string `json:"tier,omitzero"`
 }
 
 // AnalyticsWindow: Present when days or domain is passed
 type AnalyticsWindow struct {
-	Days         *int64                       `json:"days,omitempty"`
-	From         *string                      `json:"from,omitempty"`
-	To           *string                      `json:"to,omitempty"`
-	Domain       *string                      `json:"domain,omitempty"`
-	Counts       *AnalyticsWindowCounts       `json:"counts,omitempty"`
-	RatesPercent *AnalyticsWindowRatesPercent `json:"rates_percent,omitempty"`
-	Complete     *bool                        `json:"complete,omitempty"`
+	Days         *int64                       `json:"days,omitzero"`
+	From         *string                      `json:"from,omitzero"`
+	To           *string                      `json:"to,omitzero"`
+	Domain       Nullable[string]             `json:"domain,omitzero"`
+	Counts       *AnalyticsWindowCounts       `json:"counts,omitzero"`
+	RatesPercent *AnalyticsWindowRatesPercent `json:"rates_percent,omitzero"`
+	Complete     *bool                        `json:"complete,omitzero"`
 }
 
 type AnalyticsWindowCounts struct {
-	Sent        *int64 `json:"sent,omitempty"`
-	Delivered   *int64 `json:"delivered,omitempty"`
-	HardBounced *int64 `json:"hard_bounced,omitempty"`
-	SoftBounced *int64 `json:"soft_bounced,omitempty"`
-	Complained  *int64 `json:"complained,omitempty"`
-	Failed      *int64 `json:"failed,omitempty"`
+	Sent        *int64 `json:"sent,omitzero"`
+	Delivered   *int64 `json:"delivered,omitzero"`
+	HardBounced *int64 `json:"hard_bounced,omitzero"`
+	SoftBounced *int64 `json:"soft_bounced,omitzero"`
+	Complained  *int64 `json:"complained,omitzero"`
+	Failed      *int64 `json:"failed,omitzero"`
 }
 
 type AnalyticsWindowRatesPercent struct {
-	Delivered   *float64 `json:"delivered,omitempty"`
-	HardBounced *float64 `json:"hard_bounced,omitempty"`
-	SoftBounced *float64 `json:"soft_bounced,omitempty"`
-	Complained  *float64 `json:"complained,omitempty"`
+	Delivered   *float64 `json:"delivered,omitzero"`
+	HardBounced *float64 `json:"hard_bounced,omitzero"`
+	SoftBounced *float64 `json:"soft_bounced,omitzero"`
+	Complained  *float64 `json:"complained,omitzero"`
 }
 
 type ApproveAllPendingSignupsParams struct {
 	// Q: Only approve signups matching this search
-	Q *string `json:"q,omitempty"`
+	Q *string `json:"q,omitzero"`
 }
 
 type ApproveAllPendingSignupsResponse struct {
@@ -125,9 +125,9 @@ type ApproveAllPendingSignupsResponse struct {
 
 type ApprovePendingSignupResponse struct {
 	Approved         bool    `json:"approved"`
-	ContactID        *string `json:"contact_id,omitempty"`
+	ContactID        *string `json:"contact_id,omitzero"`
 	Email            string  `json:"email"`
-	AlreadyConfirmed *bool   `json:"already_confirmed,omitempty"`
+	AlreadyConfirmed *bool   `json:"already_confirmed,omitzero"`
 }
 
 type BatchSendResponse struct {
@@ -151,36 +151,36 @@ type BatchSendResponseEmailsItem struct {
 }
 
 type Broadcast struct {
-	Object   *string `json:"object,omitempty"`
+	Object   *string `json:"object,omitzero"`
 	ID       string  `json:"id"`
 	Name     string  `json:"name"`
-	Audience *string `json:"audience,omitempty"`
+	Audience *string `json:"audience,omitzero"`
 	// AudienceMeta: Details of the audience, such as the segment_id
-	AudienceMeta map[string]any `json:"audience_meta,omitempty"`
-	From         *string        `json:"from,omitempty"`
-	ReplyTo      *string        `json:"reply_to,omitempty"`
-	Subject      *string        `json:"subject,omitempty"`
-	PreviewText  *string        `json:"preview_text,omitempty"`
-	HTML         *string        `json:"html,omitempty"`
-	Text         *string        `json:"text,omitempty"`
-	Markdown     *string        `json:"markdown,omitempty"`
-	Status       string         `json:"status"`
-	ScheduledAt  *string        `json:"scheduled_at,omitempty"`
-	QueuedAt     *string        `json:"queued_at,omitempty"`
-	SentAt       *string        `json:"sent_at,omitempty"`
-	CanceledAt   *string        `json:"canceled_at,omitempty"`
+	AudienceMeta map[string]any   `json:"audience_meta,omitzero"`
+	From         Nullable[string] `json:"from,omitzero"`
+	ReplyTo      Nullable[string] `json:"reply_to,omitzero"`
+	Subject      Nullable[string] `json:"subject,omitzero"`
+	PreviewText  Nullable[string] `json:"preview_text,omitzero"`
+	HTML         Nullable[string] `json:"html,omitzero"`
+	Text         Nullable[string] `json:"text,omitzero"`
+	Markdown     Nullable[string] `json:"markdown,omitzero"`
+	Status       string           `json:"status"`
+	ScheduledAt  Nullable[string] `json:"scheduled_at,omitzero"`
+	QueuedAt     Nullable[string] `json:"queued_at,omitzero"`
+	SentAt       Nullable[string] `json:"sent_at,omitzero"`
+	CanceledAt   Nullable[string] `json:"canceled_at,omitzero"`
 	// PausedAt: Set when the campaign was stopped mid-send by the deliverability guard
-	PausedAt *string `json:"paused_at,omitempty"`
+	PausedAt Nullable[string] `json:"paused_at,omitzero"`
 	// PauseReason: Why the campaign was paused, for example the complaint rate that tripped the guard
-	PauseReason *string `json:"pause_reason,omitempty"`
+	PauseReason Nullable[string] `json:"pause_reason,omitzero"`
 	// FanoutCompletedAt: When every recipient of the send had been created
-	FanoutCompletedAt *string `json:"fanout_completed_at,omitempty"`
+	FanoutCompletedAt Nullable[string] `json:"fanout_completed_at,omitzero"`
 	// ExpectedRecipients: Eligible recipients counted when the send was accepted
-	ExpectedRecipients *int64            `json:"expected_recipients,omitempty"`
-	TrackOpens         *bool             `json:"track_opens,omitempty"`
-	TrackClicks        *bool             `json:"track_clicks,omitempty"`
-	RecipientCount     *int64            `json:"recipient_count,omitempty"`
-	Metrics            *BroadcastMetrics `json:"metrics,omitempty"`
+	ExpectedRecipients Nullable[int64]   `json:"expected_recipients,omitzero"`
+	TrackOpens         *bool             `json:"track_opens,omitzero"`
+	TrackClicks        *bool             `json:"track_clicks,omitzero"`
+	RecipientCount     *int64            `json:"recipient_count,omitzero"`
+	Metrics            *BroadcastMetrics `json:"metrics,omitzero"`
 	CreatedAt          string            `json:"created_at"`
 	UpdatedAt          string            `json:"updated_at"`
 }
@@ -189,28 +189,28 @@ type BroadcastList struct {
 	Object       string           `json:"object"`
 	Data         []Broadcast      `json:"data"`
 	HasMore      bool             `json:"has_more"`
-	StatusCounts map[string]int64 `json:"status_counts,omitempty"`
+	StatusCounts map[string]int64 `json:"status_counts,omitzero"`
 }
 
 type BroadcastMetrics struct {
-	Total           *int64   `json:"total,omitempty"`
-	Skipped         *int64   `json:"skipped,omitempty"`
-	Queued          *int64   `json:"queued,omitempty"`
-	Sending         *int64   `json:"sending,omitempty"`
-	Sent            *int64   `json:"sent,omitempty"`
-	Delivered       *int64   `json:"delivered,omitempty"`
-	Opened          *int64   `json:"opened,omitempty"`
-	Clicked         *int64   `json:"clicked,omitempty"`
-	Unsubscribed    *int64   `json:"unsubscribed,omitempty"`
-	Bounced         *int64   `json:"bounced,omitempty"`
-	Complained      *int64   `json:"complained,omitempty"`
-	Failed          *int64   `json:"failed,omitempty"`
-	Canceled        *int64   `json:"canceled,omitempty"`
-	DeliveryRate    *float64 `json:"delivery_rate,omitempty"`
-	OpenRate        *float64 `json:"open_rate,omitempty"`
-	ClickRate       *float64 `json:"click_rate,omitempty"`
-	UnsubscribeRate *float64 `json:"unsubscribe_rate,omitempty"`
-	BounceRate      *float64 `json:"bounce_rate,omitempty"`
+	Total           *int64   `json:"total,omitzero"`
+	Skipped         *int64   `json:"skipped,omitzero"`
+	Queued          *int64   `json:"queued,omitzero"`
+	Sending         *int64   `json:"sending,omitzero"`
+	Sent            *int64   `json:"sent,omitzero"`
+	Delivered       *int64   `json:"delivered,omitzero"`
+	Opened          *int64   `json:"opened,omitzero"`
+	Clicked         *int64   `json:"clicked,omitzero"`
+	Unsubscribed    *int64   `json:"unsubscribed,omitzero"`
+	Bounced         *int64   `json:"bounced,omitzero"`
+	Complained      *int64   `json:"complained,omitzero"`
+	Failed          *int64   `json:"failed,omitzero"`
+	Canceled        *int64   `json:"canceled,omitzero"`
+	DeliveryRate    *float64 `json:"delivery_rate,omitzero"`
+	OpenRate        *float64 `json:"open_rate,omitzero"`
+	ClickRate       *float64 `json:"click_rate,omitzero"`
+	UnsubscribeRate *float64 `json:"unsubscribe_rate,omitzero"`
+	BounceRate      *float64 `json:"bounce_rate,omitzero"`
 }
 
 type CancelEmailResponse struct {
@@ -223,27 +223,27 @@ type ClaimDomainParams struct {
 }
 
 type ClaimDomainResponse struct {
-	ID        *string `json:"id,omitempty"`
-	Domain    *string `json:"domain,omitempty"`
-	Status    *string `json:"status,omitempty"`
-	CreatedAt *string `json:"created_at,omitempty"`
-	Message   *string `json:"message,omitempty"`
+	ID        *string `json:"id,omitzero"`
+	Domain    *string `json:"domain,omitzero"`
+	Status    *string `json:"status,omitzero"`
+	CreatedAt *string `json:"created_at,omitzero"`
+	Message   *string `json:"message,omitzero"`
 }
 
 type Contact struct {
-	ID           string  `json:"id"`
-	Email        string  `json:"email"`
-	FirstName    *string `json:"first_name,omitempty"`
-	LastName     *string `json:"last_name,omitempty"`
-	CreatedAt    string  `json:"created_at"`
-	Unsubscribed bool    `json:"unsubscribed"`
+	ID           string           `json:"id"`
+	Email        string           `json:"email"`
+	FirstName    Nullable[string] `json:"first_name,omitzero"`
+	LastName     Nullable[string] `json:"last_name,omitzero"`
+	CreatedAt    string           `json:"created_at"`
+	Unsubscribed bool             `json:"unsubscribed"`
 	// Disposable: The address is on a known throwaway-mailbox domain (set when the contact is created).
-	Disposable  bool                `json:"disposable"`
-	Suppressed  bool                `json:"suppressed"`
-	Segments    []SegmentSummary    `json:"segments,omitempty"`
-	Object      *string             `json:"object,omitempty"`
-	Properties  map[string]any      `json:"properties,omitempty"`
-	Suppression *ContactSuppression `json:"suppression,omitempty"`
+	Disposable  bool                         `json:"disposable"`
+	Suppressed  bool                         `json:"suppressed"`
+	Segments    []SegmentSummary             `json:"segments,omitzero"`
+	Object      *string                      `json:"object,omitzero"`
+	Properties  map[string]any               `json:"properties,omitzero"`
+	Suppression Nullable[ContactSuppression] `json:"suppression,omitzero"`
 }
 
 type ContactCreated struct {
@@ -262,7 +262,7 @@ type ContactList struct {
 	HasMore bool             `json:"has_more"`
 	Data    []ContactSummary `json:"data"`
 	// Disposable: Subscribed contacts on throwaway-mailbox domains
-	Disposable *int64 `json:"disposable,omitempty"`
+	Disposable *int64 `json:"disposable,omitzero"`
 }
 
 type ContactProperty struct {
@@ -275,16 +275,16 @@ type ContactProperty struct {
 }
 
 type ContactSummary struct {
-	ID           string  `json:"id"`
-	Email        string  `json:"email"`
-	FirstName    *string `json:"first_name,omitempty"`
-	LastName     *string `json:"last_name,omitempty"`
-	CreatedAt    string  `json:"created_at"`
-	Unsubscribed bool    `json:"unsubscribed"`
+	ID           string           `json:"id"`
+	Email        string           `json:"email"`
+	FirstName    Nullable[string] `json:"first_name,omitzero"`
+	LastName     Nullable[string] `json:"last_name,omitzero"`
+	CreatedAt    string           `json:"created_at"`
+	Unsubscribed bool             `json:"unsubscribed"`
 	// Disposable: The address is on a known throwaway-mailbox domain (set when the contact is created).
 	Disposable bool             `json:"disposable"`
 	Suppressed bool             `json:"suppressed"`
-	Segments   []SegmentSummary `json:"segments,omitempty"`
+	Segments   []SegmentSummary `json:"segments,omitzero"`
 }
 
 type ContactSuppression struct {
@@ -298,36 +298,36 @@ type CreateAPIKeyRequest struct {
 	// Name: A human-readable name for the key
 	Name string `json:"name"`
 	// Scopes: Optional list of scopes to restrict the key. Available: email:send, email:read, domain:read, domain:write, contact:read, contact:write, form:read, for
-	Scopes []string `json:"scopes,omitempty"`
+	Scopes []string `json:"scopes,omitzero"`
 }
 
 // CreateBroadcastRequest: name is required unless template_id is given.
 type CreateBroadcastRequest struct {
-	Name     *string `json:"name,omitempty"`
-	Audience *string `json:"audience,omitempty"`
+	Name     *string `json:"name,omitzero"`
+	Audience *string `json:"audience,omitzero"`
 	// SegmentID: Required when audience is segment
-	SegmentID *string `json:"segment_id,omitempty"`
+	SegmentID *string `json:"segment_id,omitzero"`
 	// AudienceMeta: Details of the audience, such as the segment_id
-	AudienceMeta map[string]any `json:"audience_meta,omitempty"`
+	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
 	// TemplateID: Not in Resend, and only on create (PATCH ignores it). Start from a template (id or alias): its current content, as the template editor shows it, is co
-	TemplateID  *string `json:"template_id,omitempty"`
-	From        *string `json:"from,omitempty"`
-	ReplyTo     *string `json:"reply_to,omitempty"`
-	Subject     *string `json:"subject,omitempty"`
-	PreviewText *string `json:"preview_text,omitempty"`
+	TemplateID  *string          `json:"template_id,omitzero"`
+	From        *string          `json:"from,omitzero"`
+	ReplyTo     Nullable[string] `json:"reply_to,omitzero"`
+	Subject     *string          `json:"subject,omitzero"`
+	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Markdown: Markdown body. Must include {{unsubscribe_url}} or {{{RESEND_UNSUBSCRIBE_URL}}} before sending.
-	Markdown    *string `json:"markdown,omitempty"`
-	HTML        *string `json:"html,omitempty"`
-	Text        *string `json:"text,omitempty"`
-	TrackOpens  *bool   `json:"track_opens,omitempty"`
-	TrackClicks *bool   `json:"track_clicks,omitempty"`
+	Markdown    *string          `json:"markdown,omitzero"`
+	HTML        Nullable[string] `json:"html,omitzero"`
+	Text        Nullable[string] `json:"text,omitzero"`
+	TrackOpens  *bool            `json:"track_opens,omitzero"`
+	TrackClicks *bool            `json:"track_clicks,omitzero"`
 }
 
 type CreateContactPropertyParams struct {
 	Key  string `json:"key"`
 	Type string `json:"type"`
 	// FallbackValue: Used when a contact has no value
-	FallbackValue any `json:"fallback_value,omitempty"`
+	FallbackValue any `json:"fallback_value,omitzero"`
 }
 
 type CreateContactPropertyResponse struct {
@@ -337,116 +337,116 @@ type CreateContactPropertyResponse struct {
 type CreateContactRequest struct {
 	// Email: The contact email address
 	Email      string  `json:"email"`
-	FirstName  *string `json:"firstName,omitempty"`
-	LastName   *string `json:"lastName,omitempty"`
-	FirstName_ *string `json:"first_name,omitempty"`
-	LastName_  *string `json:"last_name,omitempty"`
+	FirstName  *string `json:"firstName,omitzero"`
+	LastName   *string `json:"lastName,omitzero"`
+	FirstName_ *string `json:"first_name,omitzero"`
+	LastName_  *string `json:"last_name,omitzero"`
 	// Unsubscribed: Global broadcast subscription status
-	Unsubscribed *bool          `json:"unsubscribed,omitempty"`
-	Properties   map[string]any `json:"properties,omitempty"`
+	Unsubscribed *bool          `json:"unsubscribed,omitzero"`
+	Properties   map[string]any `json:"properties,omitzero"`
 	// SegmentIDs: Manual segment IDs to assign this contact to
-	SegmentIDs []string `json:"segment_ids,omitempty"`
+	SegmentIDs []string `json:"segment_ids,omitzero"`
 }
 
 type CreateInboxDraftParams struct {
-	To      StringList `json:"to,omitempty"`
-	Cc      StringList `json:"cc,omitempty"`
-	Bcc     StringList `json:"bcc,omitempty"`
-	Subject *string    `json:"subject,omitempty"`
-	HTML    *string    `json:"html,omitempty"`
-	Text    *string    `json:"text,omitempty"`
+	To      StringList       `json:"to,omitzero"`
+	Cc      StringList       `json:"cc,omitzero"`
+	Bcc     StringList       `json:"bcc,omitzero"`
+	Subject Nullable[string] `json:"subject,omitzero"`
+	HTML    Nullable[string] `json:"html,omitzero"`
+	Text    Nullable[string] `json:"text,omitzero"`
 	// ThreadID: The thread to reply in. Send with reply_to_email_id.
-	ThreadID *string `json:"thread_id,omitempty"`
+	ThreadID *string `json:"thread_id,omitzero"`
 	// ReplyToEmailID: The message to reply to. Send with thread_id.
-	ReplyToEmailID *string `json:"reply_to_email_id,omitempty"`
+	ReplyToEmailID *string `json:"reply_to_email_id,omitzero"`
 }
 
 type CreateInboxLabelParams struct {
 	Name  string  `json:"name"`
-	Color *string `json:"color,omitempty"`
+	Color *string `json:"color,omitzero"`
 }
 
 type CreateInboxParams struct {
 	// EmailAddress: A plain address on one of your domains, such as support@example.com
 	EmailAddress string `json:"email_address"`
 	// Name: Internal name. Defaults to email_address.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitzero"`
 	// FromName: The name recipients see. A plain name, not a Name <email> address.
-	FromName *string `json:"from_name,omitempty"`
+	FromName *string `json:"from_name,omitzero"`
 	// Forwarding: Not available: must be false or omitted. Inboxes receive through your domain's MX record.
-	Forwarding *bool `json:"forwarding,omitempty"`
+	Forwarding *bool `json:"forwarding,omitzero"`
 }
 
 type CreateSegmentRequest struct {
-	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
-	Color       *string `json:"color,omitempty"`
+	Name        string           `json:"name"`
+	Description Nullable[string] `json:"description,omitzero"`
+	Color       Nullable[string] `json:"color,omitzero"`
 }
 
 // CreateSignupFormRequest: Keys are snake_case, as in the form object. The older camelCase spelling of each key (buttonText, doubleOptIn, welcomeEmailEnabled and so on) is still
 type CreateSignupFormRequest struct {
 	Name string `json:"name"`
 	// Fields: email is always included.
-	Fields         []string `json:"fields,omitempty"`
-	ButtonText     *string  `json:"button_text,omitempty"`
-	ButtonColor    *string  `json:"button_color,omitempty"`
-	SuccessMessage *string  `json:"success_message,omitempty"`
-	DoubleOptIn    *bool    `json:"double_opt_in,omitempty"`
+	Fields         []string `json:"fields,omitzero"`
+	ButtonText     *string  `json:"button_text,omitzero"`
+	ButtonColor    *string  `json:"button_color,omitzero"`
+	SuccessMessage *string  `json:"success_message,omitzero"`
+	DoubleOptIn    *bool    `json:"double_opt_in,omitzero"`
 	// RedirectURL: Must start with http:// or https://.
-	RedirectURL *string `json:"redirect_url,omitempty"`
+	RedirectURL Nullable[string] `json:"redirect_url,omitzero"`
 	// CaptchaEnabled: Needs turnstile_site_key and turnstile_secret_key.
-	CaptchaEnabled   *bool   `json:"captcha_enabled,omitempty"`
-	CaptchaProvider  *string `json:"captcha_provider,omitempty"`
-	TurnstileSiteKey *string `json:"turnstile_site_key,omitempty"`
+	CaptchaEnabled   *bool            `json:"captcha_enabled,omitzero"`
+	CaptchaProvider  *string          `json:"captcha_provider,omitzero"`
+	TurnstileSiteKey Nullable[string] `json:"turnstile_site_key,omitzero"`
 	// TurnstileSecretKey: Write-only. Returned forms expose turnstile_secret_configured instead.
-	TurnstileSecretKey    *string `json:"turnstile_secret_key,omitempty"`
-	BlockDisposableEmails *bool   `json:"block_disposable_emails,omitempty"`
-	Active                *bool   `json:"active,omitempty"`
+	TurnstileSecretKey    Nullable[string] `json:"turnstile_secret_key,omitzero"`
+	BlockDisposableEmails *bool            `json:"block_disposable_emails,omitzero"`
+	Active                *bool            `json:"active,omitzero"`
 	// ConfirmationEmailFrom: Sender of the double opt-in confirmation email. The platform address is used when this is unset or its domain is not verified.
-	ConfirmationEmailFrom *string `json:"confirmation_email_from,omitempty"`
+	ConfirmationEmailFrom Nullable[string] `json:"confirmation_email_from,omitzero"`
 	// WelcomeEmailEnabled: Send a welcome email to each new contact from this form.
-	WelcomeEmailEnabled *bool `json:"welcome_email_enabled,omitempty"`
+	WelcomeEmailEnabled *bool `json:"welcome_email_enabled,omitzero"`
 	// WelcomeEmailFrom: Sender of the welcome email. Its domain must be verified, or the welcome email is skipped.
-	WelcomeEmailFrom    *string `json:"welcome_email_from,omitempty"`
-	WelcomeEmailSubject *string `json:"welcome_email_subject,omitempty"`
+	WelcomeEmailFrom    Nullable[string] `json:"welcome_email_from,omitzero"`
+	WelcomeEmailSubject Nullable[string] `json:"welcome_email_subject,omitzero"`
 	// WelcomeEmailMarkdown: Welcome email body as Markdown.
-	WelcomeEmailMarkdown *string `json:"welcome_email_markdown,omitempty"`
+	WelcomeEmailMarkdown Nullable[string] `json:"welcome_email_markdown,omitzero"`
 }
 
 type CreateSuppressionRequest struct {
 	Email  string  `json:"email"`
-	Reason *string `json:"reason,omitempty"`
+	Reason *string `json:"reason,omitzero"`
 	// DiagnosticCode: Optional internal note for manual suppressions
-	DiagnosticCode *string `json:"diagnostic_code,omitempty"`
+	DiagnosticCode *string `json:"diagnostic_code,omitzero"`
 }
 
 type CreateTeamInviteParams struct {
 	Email string  `json:"email"`
-	Role  *string `json:"role,omitempty"`
+	Role  *string `json:"role,omitzero"`
 }
 
 // CreateTemplateRequest: Requires html, or markdown (an SMTPfast addition).
 type CreateTemplateRequest struct {
 	Name string `json:"name"`
 	// Alias: A second handle, unique in the team, that works wherever the id does.
-	Alias *string `json:"alias,omitempty"`
+	Alias Nullable[string] `json:"alias,omitzero"`
 	// From: Default sender, e.g. "Acme <orders@acme.com>". A send can override it.
-	From *string `json:"from,omitempty"`
+	From Nullable[string] `json:"from,omitzero"`
 	// Subject: Default subject. Can use variables. A send can override it.
-	Subject *string `json:"subject,omitempty"`
+	Subject Nullable[string] `json:"subject,omitzero"`
 	// ReplyTo: Default Reply-To address or addresses. A send can override it.
-	ReplyTo StringList `json:"reply_to,omitempty"`
+	ReplyTo StringList `json:"reply_to,omitzero"`
 	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}.
-	HTML *string `json:"html,omitempty"`
+	HTML *string `json:"html,omitzero"`
 	// Text: Plain-text body. When left out, the text part is generated from the HTML at send time. Exactly "" stops that, as in Resend; the email then carries an
-	Text *string `json:"text,omitempty"`
+	Text Nullable[string] `json:"text,omitzero"`
 	// Markdown: Not in Resend. A Markdown body, rendered into SMTPfast's email layout. Used when html is empty.
-	Markdown *string `json:"markdown,omitempty"`
+	Markdown Nullable[string] `json:"markdown,omitzero"`
 	// PreviewText: Not in Resend. The inbox preview line, put into the email as a hidden first line.
-	PreviewText *string `json:"preview_text,omitempty"`
+	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Category: Not in Resend. A label for grouping templates in the dashboard.
-	Category  *string            `json:"category,omitempty"`
-	Variables []TemplateVariable `json:"variables,omitempty"`
+	Category  Nullable[string]   `json:"category,omitzero"`
+	Variables []TemplateVariable `json:"variables,omitzero"`
 }
 
 type CreateWebhookRequest struct {
@@ -455,55 +455,55 @@ type CreateWebhookRequest struct {
 	// Events: List of event types to subscribe to. Legacy unprefixed email aliases are accepted and normalized to Resend-style email.* event names.
 	Events []string `json:"events"`
 	// Format: Payload format. standard is the signed JSON envelope; discord and slack post readable messages to a chat webhook URL. Detected from the URL when left
-	Format *string `json:"format,omitempty"`
+	Format *string `json:"format,omitzero"`
 }
 
 type DNSRecord struct {
-	Type  *string `json:"type,omitempty"`
-	Name  *string `json:"name,omitempty"`
-	Value *string `json:"value,omitempty"`
+	Type  *string `json:"type,omitzero"`
+	Name  *string `json:"name,omitzero"`
+	Value *string `json:"value,omitzero"`
 }
 
 type DeleteContactsParams struct {
-	IDs     []string `json:"ids,omitempty"`
-	Confirm *string  `json:"confirm,omitempty"`
-	Status  *string  `json:"status,omitempty"`
+	IDs     []string `json:"ids,omitzero"`
+	Confirm *string  `json:"confirm,omitzero"`
+	Status  *string  `json:"status,omitzero"`
 }
 
 type DeleteInboxDraftResponse struct {
-	Object  *string `json:"object,omitempty"`
-	ID      *string `json:"id,omitempty"`
-	Deleted *bool   `json:"deleted,omitempty"`
+	Object  *string `json:"object,omitzero"`
+	ID      *string `json:"id,omitzero"`
+	Deleted *bool   `json:"deleted,omitzero"`
 }
 
 type DeleteInboxLabelResponse struct {
-	Object  *string `json:"object,omitempty"`
-	ID      *string `json:"id,omitempty"`
-	Deleted *bool   `json:"deleted,omitempty"`
+	Object  *string `json:"object,omitzero"`
+	ID      *string `json:"id,omitzero"`
+	Deleted *bool   `json:"deleted,omitzero"`
 }
 
 type DeleteInboxResponse struct {
-	Object  *string `json:"object,omitempty"`
-	ID      *string `json:"id,omitempty"`
-	Deleted *bool   `json:"deleted,omitempty"`
+	Object  *string `json:"object,omitzero"`
+	ID      *string `json:"id,omitzero"`
+	Deleted *bool   `json:"deleted,omitzero"`
 }
 
 type DeleteInboxThreadResponse struct {
-	Object  *string `json:"object,omitempty"`
-	ID      *string `json:"id,omitempty"`
-	Deleted *bool   `json:"deleted,omitempty"`
+	Object  *string `json:"object,omitzero"`
+	ID      *string `json:"id,omitzero"`
+	Deleted *bool   `json:"deleted,omitzero"`
 }
 
 type DeleteReceivedEmailResponse struct {
-	Object  *string `json:"object,omitempty"`
-	ID      *string `json:"id,omitempty"`
-	Deleted *bool   `json:"deleted,omitempty"`
+	Object  *string `json:"object,omitzero"`
+	ID      *string `json:"id,omitzero"`
+	Deleted *bool   `json:"deleted,omitzero"`
 }
 
 type DeletedObject struct {
-	Object  *string `json:"object,omitempty"`
-	ID      *string `json:"id,omitempty"`
-	Deleted *bool   `json:"deleted,omitempty"`
+	Object  *string `json:"object,omitzero"`
+	ID      *string `json:"id,omitzero"`
+	Deleted *bool   `json:"deleted,omitzero"`
 }
 
 type Domain struct {
@@ -511,9 +511,9 @@ type Domain struct {
 	Domain string `json:"domain"`
 	Status string `json:"status"`
 	// ReceivingEnabled: Whether inbound email is turned on for the domain (list responses).
-	ReceivingEnabled *bool `json:"receivingEnabled,omitempty"`
+	ReceivingEnabled *bool `json:"receivingEnabled,omitzero"`
 	// ReceivingStatus: Inbound status (list responses).
-	ReceivingStatus *string     `json:"receivingStatus,omitempty"`
+	ReceivingStatus *string     `json:"receivingStatus,omitzero"`
 	DNSRecords      []DNSRecord `json:"dns_records"`
 }
 
@@ -534,22 +534,22 @@ type DomainListItem struct {
 }
 
 type DomainReceiving struct {
-	Enabled     *bool                            `json:"enabled,omitempty"`
-	Status      *string                          `json:"status,omitempty"`
-	MXRecord    *DomainReceivingMXRecord         `json:"mx_record,omitempty"`
-	PublishedMX []DomainReceivingPublishedMXItem `json:"published_mx,omitempty"`
-	CompetingMX []string                         `json:"competing_mx,omitempty"`
+	Enabled     *bool                            `json:"enabled,omitzero"`
+	Status      *string                          `json:"status,omitzero"`
+	MXRecord    *DomainReceivingMXRecord         `json:"mx_record,omitzero"`
+	PublishedMX []DomainReceivingPublishedMXItem `json:"published_mx,omitzero"`
+	CompetingMX []string                         `json:"competing_mx,omitzero"`
 }
 
 type DomainReceivingMXRecord struct {
-	Type     *string `json:"type,omitempty"`
-	Priority *int64  `json:"priority,omitempty"`
-	Value    *string `json:"value,omitempty"`
+	Type     *string `json:"type,omitzero"`
+	Priority *int64  `json:"priority,omitzero"`
+	Value    *string `json:"value,omitzero"`
 }
 
 type DomainReceivingPublishedMXItem struct {
-	Priority *int64  `json:"priority,omitempty"`
-	Exchange *string `json:"exchange,omitempty"`
+	Priority *int64  `json:"priority,omitzero"`
+	Exchange *string `json:"exchange,omitzero"`
 }
 
 type DuplicateBroadcastResponse struct {
@@ -559,12 +559,12 @@ type DuplicateBroadcastResponse struct {
 type Email struct {
 	ID string `json:"id"`
 	// From: As sent, so it can include a display name: Name <hello@yourapp.com>
-	From    string   `json:"from"`
-	To      []string `json:"to"`
-	Subject string   `json:"subject"`
-	HTML    *string  `json:"html,omitempty"`
-	Text    *string  `json:"text,omitempty"`
-	Status  string   `json:"status"`
+	From    string           `json:"from"`
+	To      []string         `json:"to"`
+	Subject string           `json:"subject"`
+	HTML    Nullable[string] `json:"html,omitzero"`
+	Text    Nullable[string] `json:"text,omitzero"`
+	Status  string           `json:"status"`
 	// Source: api, smtp, dashboard, broadcast or broadcast_test
 	Source    string `json:"source"`
 	CreatedAt string `json:"created_at"`
@@ -573,7 +573,7 @@ type Email struct {
 type EmailList struct {
 	Data []EmailSummary `json:"data"`
 	// Page: Absent when paging with after or before
-	Page  *int64 `json:"page,omitempty"`
+	Page  *int64 `json:"page,omitzero"`
 	Limit int64  `json:"limit"`
 	// Total: Emails matching the filters; with after or before, only those past that email
 	Total   int64 `json:"total"`
@@ -604,27 +604,27 @@ type Error struct {
 }
 
 type ExportContactsQuery struct {
-	Format     *string `json:"format,omitempty"`
-	Status     *string `json:"status,omitempty"`
-	Disposable *bool   `json:"disposable,omitempty"`
+	Format     *string `json:"format,omitzero"`
+	Status     *string `json:"status,omitzero"`
+	Disposable *bool   `json:"disposable,omitzero"`
 }
 
 type ForwardInboxThreadEmailParams struct {
 	To      StringList `json:"to"`
-	Cc      StringList `json:"cc,omitempty"`
-	Bcc     StringList `json:"bcc,omitempty"`
-	HTML    *string    `json:"html,omitempty"`
-	Text    *string    `json:"text,omitempty"`
-	Subject *string    `json:"subject,omitempty"`
+	Cc      StringList `json:"cc,omitzero"`
+	Bcc     StringList `json:"bcc,omitzero"`
+	HTML    *string    `json:"html,omitzero"`
+	Text    *string    `json:"text,omitzero"`
+	Subject *string    `json:"subject,omitzero"`
 }
 
 type GetAnalyticsQuery struct {
-	Days   *int64  `json:"days,omitempty"`
-	Domain *string `json:"domain,omitempty"`
+	Days   *int64  `json:"days,omitzero"`
+	Domain *string `json:"domain,omitzero"`
 }
 
 type GetBroadcastAudienceQuery struct {
-	SegmentID *string `json:"segment_id,omitempty"`
+	SegmentID *string `json:"segment_id,omitzero"`
 }
 
 type GetCapabilitiesResponse struct {
@@ -641,21 +641,21 @@ type GetCapabilitiesResponse struct {
 }
 
 type GetCapabilitiesResponseAccount struct {
-	Tier   *string `json:"tier,omitempty"`
-	Status *string `json:"status,omitempty"`
+	Tier   *string `json:"tier,omitzero"`
+	Status *string `json:"status,omitzero"`
 }
 
 type GetCapabilitiesResponseRateLimit struct {
-	PerSecond *int64 `json:"per_second,omitempty"`
-	Remaining *int64 `json:"remaining,omitempty"`
+	PerSecond *int64 `json:"per_second,omitzero"`
+	Remaining *int64 `json:"remaining,omitzero"`
 	// Reset: When the current one-second window resets, in milliseconds since the epoch.
-	Reset *int64 `json:"reset,omitempty"`
+	Reset *int64 `json:"reset,omitzero"`
 }
 
 // GetCapabilitiesResponseSendChecks: Which send-time safety checks apply to this account.
 type GetCapabilitiesResponseSendChecks struct {
-	DisplayNameEnforced *bool `json:"display_name_enforced,omitempty"`
-	LinkScanEnforced    *bool `json:"link_scan_enforced,omitempty"`
+	DisplayNameEnforced *bool `json:"display_name_enforced,omitzero"`
+	LinkScanEnforced    *bool `json:"link_scan_enforced,omitzero"`
 }
 
 type GetContactPropertyResponse struct {
@@ -663,286 +663,286 @@ type GetContactPropertyResponse struct {
 }
 
 type GetDomainClaimRecordQuery struct {
-	Domain *string `json:"domain,omitempty"`
+	Domain *string `json:"domain,omitzero"`
 }
 
 type GetDomainClaimRecordResponse struct {
-	Domain *string                             `json:"domain,omitempty"`
-	Record *GetDomainClaimRecordResponseRecord `json:"record,omitempty"`
+	Domain *string                             `json:"domain,omitzero"`
+	Record *GetDomainClaimRecordResponseRecord `json:"record,omitzero"`
 }
 
 type GetDomainClaimRecordResponseRecord struct {
-	Type  *string `json:"type,omitempty"`
-	Name  *string `json:"name,omitempty"`
-	Value *string `json:"value,omitempty"`
-	Ttl   *string `json:"ttl,omitempty"`
+	Type  *string `json:"type,omitzero"`
+	Name  *string `json:"name,omitzero"`
+	Value *string `json:"value,omitzero"`
+	Ttl   *string `json:"ttl,omitzero"`
 }
 
 type GetEmailMetricsQuery struct {
-	StartDate   *string `json:"start_date,omitempty"`
-	EndDate     *string `json:"end_date,omitempty"`
-	Timezone    *string `json:"timezone,omitempty"`
-	Granularity *string `json:"granularity,omitempty"`
-	Metrics     *string `json:"metrics,omitempty"`
-	Dimensions  *string `json:"dimensions,omitempty"`
-	DomainID    *string `json:"domain_id,omitempty"`
-	EmailID     *string `json:"email_id,omitempty"`
-	BroadcastID *string `json:"broadcast_id,omitempty"`
+	StartDate   *string `json:"start_date,omitzero"`
+	EndDate     *string `json:"end_date,omitzero"`
+	Timezone    *string `json:"timezone,omitzero"`
+	Granularity *string `json:"granularity,omitzero"`
+	Metrics     *string `json:"metrics,omitzero"`
+	Dimensions  *string `json:"dimensions,omitzero"`
+	DomainID    *string `json:"domain_id,omitzero"`
+	EmailID     *string `json:"email_id,omitzero"`
+	BroadcastID *string `json:"broadcast_id,omitzero"`
 }
 
 type GetEmailMetricsResponse struct {
-	Object      *string            `json:"object,omitempty"`
-	StartDate   *string            `json:"start_date,omitempty"`
-	EndDate     *string            `json:"end_date,omitempty"`
-	Timezone    *string            `json:"timezone,omitempty"`
-	Metrics     []string           `json:"metrics,omitempty"`
-	Dimensions  []string           `json:"dimensions,omitempty"`
-	Granularity *string            `json:"granularity,omitempty"`
-	Totals      map[string]float64 `json:"totals,omitempty"`
+	Object      *string            `json:"object,omitzero"`
+	StartDate   *string            `json:"start_date,omitzero"`
+	EndDate     *string            `json:"end_date,omitzero"`
+	Timezone    *string            `json:"timezone,omitzero"`
+	Metrics     []string           `json:"metrics,omitzero"`
+	Dimensions  []string           `json:"dimensions,omitzero"`
+	Granularity *string            `json:"granularity,omitzero"`
+	Totals      map[string]float64 `json:"totals,omitzero"`
 	// Data: One row per combination of the requested dimensions. Absent when no dimensions are requested.
-	Data []map[string]any `json:"data,omitempty"`
+	Data []map[string]any `json:"data,omitzero"`
 }
 
 type GetWebhookDeliveryResponse struct {
-	Object      *string `json:"object,omitempty"`
-	ID          *string `json:"id,omitempty"`
-	WebhookID   *string `json:"webhook_id,omitempty"`
-	Event       *string `json:"event,omitempty"`
-	Status      *string `json:"status,omitempty"`
-	Attempts    *int64  `json:"attempts,omitempty"`
-	MaxAttempts *int64  `json:"max_attempts,omitempty"`
-	StatusCode  *int64  `json:"status_code,omitempty"`
-	DurationMs  *int64  `json:"duration_ms,omitempty"`
-	Error       *string `json:"error,omitempty"`
+	Object      *string          `json:"object,omitzero"`
+	ID          *string          `json:"id,omitzero"`
+	WebhookID   *string          `json:"webhook_id,omitzero"`
+	Event       *string          `json:"event,omitzero"`
+	Status      *string          `json:"status,omitzero"`
+	Attempts    *int64           `json:"attempts,omitzero"`
+	MaxAttempts *int64           `json:"max_attempts,omitzero"`
+	StatusCode  Nullable[int64]  `json:"status_code,omitzero"`
+	DurationMs  Nullable[int64]  `json:"duration_ms,omitzero"`
+	Error       Nullable[string] `json:"error,omitzero"`
 	// Response: First 500 characters of the last response body
-	Response      *string                                    `json:"response,omitempty"`
-	AttemptLog    []GetWebhookDeliveryResponseAttemptLogItem `json:"attempt_log,omitempty"`
-	NextAttemptAt *string                                    `json:"next_attempt_at,omitempty"`
-	DeliveredAt   *string                                    `json:"delivered_at,omitempty"`
-	CreatedAt     *string                                    `json:"created_at,omitempty"`
+	Response      Nullable[string]                           `json:"response,omitzero"`
+	AttemptLog    []GetWebhookDeliveryResponseAttemptLogItem `json:"attempt_log,omitzero"`
+	NextAttemptAt Nullable[string]                           `json:"next_attempt_at,omitzero"`
+	DeliveredAt   Nullable[string]                           `json:"delivered_at,omitzero"`
+	CreatedAt     *string                                    `json:"created_at,omitzero"`
 	// Payload: The JSON body as sent
-	Payload *string `json:"payload,omitempty"`
+	Payload *string `json:"payload,omitzero"`
 }
 
 type GetWebhookDeliveryResponseAttemptLogItem struct {
-	At         *string `json:"at,omitempty"`
-	StatusCode *int64  `json:"status_code,omitempty"`
-	DurationMs *int64  `json:"duration_ms,omitempty"`
-	Error      *string `json:"error,omitempty"`
+	At         *string          `json:"at,omitzero"`
+	StatusCode Nullable[int64]  `json:"status_code,omitzero"`
+	DurationMs *int64           `json:"duration_ms,omitzero"`
+	Error      Nullable[string] `json:"error,omitzero"`
 }
 
 type Inbox struct {
-	Object       *string `json:"object,omitempty"`
-	ID           *string `json:"id,omitempty"`
-	Name         *string `json:"name,omitempty"`
-	EmailAddress *string `json:"email_address,omitempty"`
-	DomainID     *string `json:"domain_id,omitempty"`
+	Object       *string `json:"object,omitzero"`
+	ID           *string `json:"id,omitzero"`
+	Name         *string `json:"name,omitzero"`
+	EmailAddress *string `json:"email_address,omitzero"`
+	DomainID     *string `json:"domain_id,omitzero"`
 	// ReceivingAddress: Always null: SMTPfast inboxes receive through your own MX record, never a forwarding address.
-	ReceivingAddress any     `json:"receiving_address,omitempty"`
-	FromName         *string `json:"from_name,omitempty"`
+	ReceivingAddress any              `json:"receiving_address,omitzero"`
+	FromName         Nullable[string] `json:"from_name,omitzero"`
 	// Unread: Threads in the inbox folder with at least one unread message
-	Unread *int64 `json:"unread,omitempty"`
+	Unread *int64 `json:"unread,omitzero"`
 	// Drafts: Unsent drafts
-	Drafts *int64 `json:"drafts,omitempty"`
+	Drafts *int64 `json:"drafts,omitzero"`
 	// LastReceived: When a thread in this inbox was last active
-	LastReceived *string `json:"last_received,omitempty"`
-	CreatedAt    *string `json:"created_at,omitempty"`
+	LastReceived Nullable[string] `json:"last_received,omitzero"`
+	CreatedAt    *string          `json:"created_at,omitzero"`
 }
 
 type InboxDraft struct {
-	Object         *string  `json:"object,omitempty"`
-	ID             *string  `json:"id,omitempty"`
-	Type           *string  `json:"type,omitempty"`
-	To             []string `json:"to,omitempty"`
-	Cc             []string `json:"cc,omitempty"`
-	Bcc            []string `json:"bcc,omitempty"`
-	Subject        *string  `json:"subject,omitempty"`
-	HTML           *string  `json:"html,omitempty"`
-	Text           *string  `json:"text,omitempty"`
-	ThreadID       *string  `json:"thread_id,omitempty"`
-	ReplyToEmailID *string  `json:"reply_to_email_id,omitempty"`
+	Object         *string          `json:"object,omitzero"`
+	ID             *string          `json:"id,omitzero"`
+	Type           *string          `json:"type,omitzero"`
+	To             []string         `json:"to,omitzero"`
+	Cc             []string         `json:"cc,omitzero"`
+	Bcc            []string         `json:"bcc,omitzero"`
+	Subject        Nullable[string] `json:"subject,omitzero"`
+	HTML           Nullable[string] `json:"html,omitzero"`
+	Text           Nullable[string] `json:"text,omitzero"`
+	ThreadID       Nullable[string] `json:"thread_id,omitzero"`
+	ReplyToEmailID Nullable[string] `json:"reply_to_email_id,omitzero"`
 	// EmailID: The queued email once sent
-	EmailID   *string `json:"email_id,omitempty"`
-	CreatedAt *string `json:"created_at,omitempty"`
-	UpdatedAt *string `json:"updated_at,omitempty"`
+	EmailID   Nullable[string] `json:"email_id,omitzero"`
+	CreatedAt *string          `json:"created_at,omitzero"`
+	UpdatedAt *string          `json:"updated_at,omitzero"`
 	// CreatedVia: Who wrote the draft. Not in Resend.
-	CreatedVia *string `json:"created_via,omitempty"`
+	CreatedVia *string `json:"created_via,omitzero"`
 	// SentAt: Not in Resend
-	SentAt *string `json:"sent_at,omitempty"`
+	SentAt Nullable[string] `json:"sent_at,omitzero"`
 	// Revision: Goes up with every edit. Pass it to send or update to act only on this version. Not in Resend.
-	Revision *int64 `json:"revision,omitempty"`
+	Revision *int64 `json:"revision,omitzero"`
 	// ThreadSubject: The subject of the thread a reply draft answers. Not in Resend.
-	ThreadSubject *string `json:"thread_subject,omitempty"`
+	ThreadSubject Nullable[string] `json:"thread_subject,omitzero"`
 }
 
 type InboxDraftListItem struct {
-	ID             *string  `json:"id,omitempty"`
-	Type           *string  `json:"type,omitempty"`
-	To             []string `json:"to,omitempty"`
-	Cc             []string `json:"cc,omitempty"`
-	Bcc            []string `json:"bcc,omitempty"`
-	Subject        *string  `json:"subject,omitempty"`
-	Snippet        *string  `json:"snippet,omitempty"`
-	ThreadID       *string  `json:"thread_id,omitempty"`
-	ReplyToEmailID *string  `json:"reply_to_email_id,omitempty"`
-	UpdatedAt      *string  `json:"updated_at,omitempty"`
+	ID             *string          `json:"id,omitzero"`
+	Type           *string          `json:"type,omitzero"`
+	To             []string         `json:"to,omitzero"`
+	Cc             []string         `json:"cc,omitzero"`
+	Bcc            []string         `json:"bcc,omitzero"`
+	Subject        Nullable[string] `json:"subject,omitzero"`
+	Snippet        Nullable[string] `json:"snippet,omitzero"`
+	ThreadID       Nullable[string] `json:"thread_id,omitzero"`
+	ReplyToEmailID Nullable[string] `json:"reply_to_email_id,omitzero"`
+	UpdatedAt      *string          `json:"updated_at,omitzero"`
 	// CreatedVia: Not in Resend
-	CreatedVia *string `json:"created_via,omitempty"`
+	CreatedVia *string `json:"created_via,omitzero"`
 	// CreatedAt: Not in Resend
-	CreatedAt *string `json:"created_at,omitempty"`
+	CreatedAt *string `json:"created_at,omitzero"`
 	// Revision: Not in Resend
-	Revision *int64 `json:"revision,omitempty"`
+	Revision *int64 `json:"revision,omitzero"`
 	// ThreadSubject: Not in Resend
-	ThreadSubject *string `json:"thread_subject,omitempty"`
+	ThreadSubject Nullable[string] `json:"thread_subject,omitzero"`
 }
 
 type InboxLabel struct {
-	Object    *string `json:"object,omitempty"`
-	ID        *string `json:"id,omitempty"`
-	Name      *string `json:"name,omitempty"`
-	Color     *string `json:"color,omitempty"`
-	CreatedAt *string `json:"created_at,omitempty"`
+	Object    *string `json:"object,omitzero"`
+	ID        *string `json:"id,omitzero"`
+	Name      *string `json:"name,omitzero"`
+	Color     *string `json:"color,omitzero"`
+	CreatedAt *string `json:"created_at,omitzero"`
 }
 
 type InboxLabelRef struct {
-	ID    *string `json:"id,omitempty"`
-	Name  *string `json:"name,omitempty"`
-	Color *string `json:"color,omitempty"`
+	ID    *string `json:"id,omitzero"`
+	Name  *string `json:"name,omitzero"`
+	Color *string `json:"color,omitzero"`
 }
 
 type InboxListItem struct {
-	ID           *string `json:"id,omitempty"`
-	Name         *string `json:"name,omitempty"`
-	EmailAddress *string `json:"email_address,omitempty"`
-	FromName     *string `json:"from_name,omitempty"`
-	Unread       *int64  `json:"unread,omitempty"`
-	LastReceived *string `json:"last_received,omitempty"`
+	ID           *string          `json:"id,omitzero"`
+	Name         Nullable[string] `json:"name,omitzero"`
+	EmailAddress *string          `json:"email_address,omitzero"`
+	FromName     Nullable[string] `json:"from_name,omitzero"`
+	Unread       *int64           `json:"unread,omitzero"`
+	LastReceived Nullable[string] `json:"last_received,omitzero"`
 	// DomainID: Not in Resend's list item
-	DomainID *string `json:"domain_id,omitempty"`
+	DomainID *string `json:"domain_id,omitzero"`
 	// Drafts: Not in Resend's list item
-	Drafts *int64 `json:"drafts,omitempty"`
+	Drafts *int64 `json:"drafts,omitzero"`
 	// CreatedAt: Not in Resend's list item
-	CreatedAt *string `json:"created_at,omitempty"`
+	CreatedAt *string `json:"created_at,omitzero"`
 }
 
 type InboxSentEmail struct {
 	// ID: For a received message, also its id under /v1/emails/receiving
-	ID          *string                         `json:"id,omitempty"`
-	Direction   *string                         `json:"direction,omitempty"`
-	From        *string                         `json:"from,omitempty"`
-	To          []string                        `json:"to,omitempty"`
-	Cc          []string                        `json:"cc,omitempty"`
-	Bcc         []string                        `json:"bcc,omitempty"`
-	ReplyTo     []string                        `json:"reply_to,omitempty"`
-	Subject     *string                         `json:"subject,omitempty"`
-	MessageID   *string                         `json:"message_id,omitempty"`
-	HTML        *string                         `json:"html,omitempty"`
-	Text        *string                         `json:"text,omitempty"`
-	Attachments []InboxSentEmailAttachmentsItem `json:"attachments,omitempty"`
-	Read        *bool                           `json:"read,omitempty"`
-	ReceivedAt  *string                         `json:"received_at,omitempty"`
+	ID          *string                         `json:"id,omitzero"`
+	Direction   *string                         `json:"direction,omitzero"`
+	From        *string                         `json:"from,omitzero"`
+	To          []string                        `json:"to,omitzero"`
+	Cc          []string                        `json:"cc,omitzero"`
+	Bcc         []string                        `json:"bcc,omitzero"`
+	ReplyTo     []string                        `json:"reply_to,omitzero"`
+	Subject     Nullable[string]                `json:"subject,omitzero"`
+	MessageID   Nullable[string]                `json:"message_id,omitzero"`
+	HTML        Nullable[string]                `json:"html,omitzero"`
+	Text        Nullable[string]                `json:"text,omitzero"`
+	Attachments []InboxSentEmailAttachmentsItem `json:"attachments,omitzero"`
+	Read        *bool                           `json:"read,omitzero"`
+	ReceivedAt  *string                         `json:"received_at,omitzero"`
 	// Status: delivered or quarantined for a received message, the send status for a sent one. Not in Resend.
-	Status *string `json:"status,omitempty"`
+	Status *string `json:"status,omitzero"`
 	// Verdicts: SES authentication and scan verdicts of a received message (null for sent ones). Not in Resend.
-	Verdicts *InboxSentEmailVerdicts `json:"verdicts,omitempty"`
+	Verdicts Nullable[InboxSentEmailVerdicts] `json:"verdicts,omitzero"`
 	// InReplyTo: Not in Resend
-	InReplyTo *string `json:"in_reply_to,omitempty"`
+	InReplyTo Nullable[string] `json:"in_reply_to,omitzero"`
 	// EmailID: Same as id; the email in GET /v1/emails/{id}
-	EmailID *string `json:"email_id,omitempty"`
+	EmailID *string `json:"email_id,omitzero"`
 	// ThreadID: Not in Resend
-	ThreadID *string `json:"thread_id,omitempty"`
+	ThreadID *string `json:"thread_id,omitzero"`
 }
 
 type InboxSentEmailAttachmentsItem struct {
-	ID          *string `json:"id,omitempty"`
-	Filename    *string `json:"filename,omitempty"`
-	Size        *int64  `json:"size,omitempty"`
-	ContentType *string `json:"content_type,omitempty"`
+	ID          *string          `json:"id,omitzero"`
+	Filename    Nullable[string] `json:"filename,omitzero"`
+	Size        Nullable[int64]  `json:"size,omitzero"`
+	ContentType Nullable[string] `json:"content_type,omitzero"`
 }
 
 // InboxSentEmailVerdicts: SES authentication and scan verdicts of a received message (null for sent ones). Not in Resend.
 type InboxSentEmailVerdicts struct {
-	SPF   *string `json:"spf,omitempty"`
-	DKIM  *string `json:"dkim,omitempty"`
-	DMARC *string `json:"dmarc,omitempty"`
-	Spam  *string `json:"spam,omitempty"`
-	Virus *string `json:"virus,omitempty"`
+	SPF   Nullable[string] `json:"spf,omitzero"`
+	DKIM  Nullable[string] `json:"dkim,omitzero"`
+	DMARC Nullable[string] `json:"dmarc,omitzero"`
+	Spam  Nullable[string] `json:"spam,omitzero"`
+	Virus Nullable[string] `json:"virus,omitzero"`
 }
 
 type InboxThread struct {
-	Object  *string         `json:"object,omitempty"`
-	ID      *string         `json:"id,omitempty"`
-	Subject *string         `json:"subject,omitempty"`
-	Folder  *string         `json:"folder,omitempty"`
-	Labels  []InboxLabelRef `json:"labels,omitempty"`
+	Object  *string          `json:"object,omitzero"`
+	ID      *string          `json:"id,omitzero"`
+	Subject Nullable[string] `json:"subject,omitzero"`
+	Folder  *string          `json:"folder,omitzero"`
+	Labels  []InboxLabelRef  `json:"labels,omitzero"`
 	// Read: True only when every message in the thread is read
-	Read *bool `json:"read,omitempty"`
+	Read *bool `json:"read,omitzero"`
 	// ReceivedAt: When the thread was last active. Not in Resend's thread object.
-	ReceivedAt *string `json:"received_at,omitempty"`
+	ReceivedAt *string `json:"received_at,omitzero"`
 	// DeleteAfter: When a thread in trash is removed. Not in Resend.
-	DeleteAfter *string `json:"delete_after,omitempty"`
+	DeleteAfter Nullable[string] `json:"delete_after,omitzero"`
 }
 
 type InboxThreadEmail struct {
 	// ID: For a received message, also its id under /v1/emails/receiving
-	ID          *string                           `json:"id,omitempty"`
-	Direction   *string                           `json:"direction,omitempty"`
-	From        *string                           `json:"from,omitempty"`
-	To          []string                          `json:"to,omitempty"`
-	Cc          []string                          `json:"cc,omitempty"`
-	Bcc         []string                          `json:"bcc,omitempty"`
-	ReplyTo     []string                          `json:"reply_to,omitempty"`
-	Subject     *string                           `json:"subject,omitempty"`
-	MessageID   *string                           `json:"message_id,omitempty"`
-	HTML        *string                           `json:"html,omitempty"`
-	Text        *string                           `json:"text,omitempty"`
-	Attachments []InboxThreadEmailAttachmentsItem `json:"attachments,omitempty"`
-	Read        *bool                             `json:"read,omitempty"`
-	ReceivedAt  *string                           `json:"received_at,omitempty"`
+	ID          *string                           `json:"id,omitzero"`
+	Direction   *string                           `json:"direction,omitzero"`
+	From        *string                           `json:"from,omitzero"`
+	To          []string                          `json:"to,omitzero"`
+	Cc          []string                          `json:"cc,omitzero"`
+	Bcc         []string                          `json:"bcc,omitzero"`
+	ReplyTo     []string                          `json:"reply_to,omitzero"`
+	Subject     Nullable[string]                  `json:"subject,omitzero"`
+	MessageID   Nullable[string]                  `json:"message_id,omitzero"`
+	HTML        Nullable[string]                  `json:"html,omitzero"`
+	Text        Nullable[string]                  `json:"text,omitzero"`
+	Attachments []InboxThreadEmailAttachmentsItem `json:"attachments,omitzero"`
+	Read        *bool                             `json:"read,omitzero"`
+	ReceivedAt  *string                           `json:"received_at,omitzero"`
 	// Status: delivered or quarantined for a received message, the send status for a sent one. Not in Resend.
-	Status *string `json:"status,omitempty"`
+	Status *string `json:"status,omitzero"`
 	// Verdicts: SES authentication and scan verdicts of a received message (null for sent ones). Not in Resend.
-	Verdicts *InboxThreadEmailVerdicts `json:"verdicts,omitempty"`
+	Verdicts Nullable[InboxThreadEmailVerdicts] `json:"verdicts,omitzero"`
 	// InReplyTo: Not in Resend
-	InReplyTo *string `json:"in_reply_to,omitempty"`
+	InReplyTo Nullable[string] `json:"in_reply_to,omitzero"`
 }
 
 type InboxThreadEmailAttachmentsItem struct {
-	ID          *string `json:"id,omitempty"`
-	Filename    *string `json:"filename,omitempty"`
-	Size        *int64  `json:"size,omitempty"`
-	ContentType *string `json:"content_type,omitempty"`
+	ID          *string          `json:"id,omitzero"`
+	Filename    Nullable[string] `json:"filename,omitzero"`
+	Size        Nullable[int64]  `json:"size,omitzero"`
+	ContentType Nullable[string] `json:"content_type,omitzero"`
 }
 
 // InboxThreadEmailVerdicts: SES authentication and scan verdicts of a received message (null for sent ones). Not in Resend.
 type InboxThreadEmailVerdicts struct {
-	SPF   *string `json:"spf,omitempty"`
-	DKIM  *string `json:"dkim,omitempty"`
-	DMARC *string `json:"dmarc,omitempty"`
-	Spam  *string `json:"spam,omitempty"`
-	Virus *string `json:"virus,omitempty"`
+	SPF   Nullable[string] `json:"spf,omitzero"`
+	DKIM  Nullable[string] `json:"dkim,omitzero"`
+	DMARC Nullable[string] `json:"dmarc,omitzero"`
+	Spam  Nullable[string] `json:"spam,omitzero"`
+	Virus Nullable[string] `json:"virus,omitzero"`
 }
 
 type InboxThreadListItem struct {
-	ID      *string `json:"id,omitempty"`
-	Subject *string `json:"subject,omitempty"`
+	ID      *string          `json:"id,omitzero"`
+	Subject Nullable[string] `json:"subject,omitzero"`
 	// From: Sender of the most recent message
-	From          *string         `json:"from,omitempty"`
-	To            []string        `json:"to,omitempty"`
-	Cc            []string        `json:"cc,omitempty"`
-	Bcc           []string        `json:"bcc,omitempty"`
-	Labels        []InboxLabelRef `json:"labels,omitempty"`
-	MessageCount  *int64          `json:"message_count,omitempty"`
-	HasAttachment *bool           `json:"has_attachment,omitempty"`
-	HasDraft      *bool           `json:"has_draft,omitempty"`
-	Read          *bool           `json:"read,omitempty"`
-	ReceivedAt    *string         `json:"received_at,omitempty"`
+	From          Nullable[string] `json:"from,omitzero"`
+	To            []string         `json:"to,omitzero"`
+	Cc            []string         `json:"cc,omitzero"`
+	Bcc           []string         `json:"bcc,omitzero"`
+	Labels        []InboxLabelRef  `json:"labels,omitzero"`
+	MessageCount  *int64           `json:"message_count,omitzero"`
+	HasAttachment *bool            `json:"has_attachment,omitzero"`
+	HasDraft      *bool            `json:"has_draft,omitzero"`
+	Read          *bool            `json:"read,omitzero"`
+	ReceivedAt    *string          `json:"received_at,omitzero"`
 	// Folder: Not in Resend's list item
-	Folder *string `json:"folder,omitempty"`
+	Folder *string `json:"folder,omitzero"`
 	// UnreadCount: Unread messages in the thread. Not in Resend.
-	UnreadCount *int64 `json:"unread_count,omitempty"`
+	UnreadCount *int64 `json:"unread_count,omitzero"`
 	// Snippet: A preview of the most recent message. Not in Resend.
-	Snippet *string `json:"snippet,omitempty"`
+	Snippet Nullable[string] `json:"snippet,omitzero"`
 }
 
 type ListBroadcastClickedLinksResponse struct {
@@ -959,23 +959,23 @@ type ListBroadcastClickedLinksResponseLinksItem struct {
 }
 
 type ListBroadcastRecipientsQuery struct {
-	Type       *string `json:"type,omitempty"`
-	BounceType *string `json:"bounce_type,omitempty"`
-	Email      *string `json:"email,omitempty"`
-	Limit      *int64  `json:"limit,omitempty"`
-	After      *string `json:"after,omitempty"`
-	Before     *string `json:"before,omitempty"`
+	Type       *string `json:"type,omitzero"`
+	BounceType *string `json:"bounce_type,omitzero"`
+	Email      *string `json:"email,omitzero"`
+	Limit      *int64  `json:"limit,omitzero"`
+	After      *string `json:"after,omitzero"`
+	Before     *string `json:"before,omitzero"`
 }
 
 type ListBroadcastsQuery struct {
-	Status *string `json:"status,omitempty"`
-	Q      *string `json:"q,omitempty"`
+	Status *string `json:"status,omitzero"`
+	Q      *string `json:"q,omitzero"`
 }
 
 type ListClickedLinksQuery struct {
-	Days     *int64  `json:"days,omitempty"`
-	DomainID *string `json:"domain_id,omitempty"`
-	URL      *string `json:"url,omitempty"`
+	Days     *int64  `json:"days,omitzero"`
+	DomainID *string `json:"domain_id,omitzero"`
+	URL      *string `json:"url,omitzero"`
 }
 
 type ListContactPropertiesResponse struct {
@@ -983,137 +983,137 @@ type ListContactPropertiesResponse struct {
 }
 
 type ListContactsQuery struct {
-	Q          *string `json:"q,omitempty"`
-	Status     *string `json:"status,omitempty"`
-	Disposable *bool   `json:"disposable,omitempty"`
-	SegmentID  *string `json:"segment_id,omitempty"`
-	Limit      *int64  `json:"limit,omitempty"`
+	Q          *string `json:"q,omitzero"`
+	Status     *string `json:"status,omitzero"`
+	Disposable *bool   `json:"disposable,omitzero"`
+	SegmentID  *string `json:"segment_id,omitzero"`
+	Limit      *int64  `json:"limit,omitzero"`
 }
 
 type ListEmailsQuery struct {
-	Limit  *int64  `json:"limit,omitempty"`
-	Page   *int64  `json:"page,omitempty"`
-	Status *string `json:"status,omitempty"`
-	To     *string `json:"to,omitempty"`
-	After  *string `json:"after,omitempty"`
-	Before *string `json:"before,omitempty"`
+	Limit  *int64  `json:"limit,omitzero"`
+	Page   *int64  `json:"page,omitzero"`
+	Status *string `json:"status,omitzero"`
+	To     *string `json:"to,omitzero"`
+	After  *string `json:"after,omitzero"`
+	Before *string `json:"before,omitzero"`
 }
 
 type ListInboxDraftsQuery struct {
-	Limit  *int64  `json:"limit,omitempty"`
-	After  *string `json:"after,omitempty"`
-	Before *string `json:"before,omitempty"`
+	Limit  *int64  `json:"limit,omitzero"`
+	After  *string `json:"after,omitzero"`
+	Before *string `json:"before,omitzero"`
 }
 
 type ListInboxDraftsResponse struct {
-	Object  *string              `json:"object,omitempty"`
-	HasMore *bool                `json:"has_more,omitempty"`
-	Data    []InboxDraftListItem `json:"data,omitempty"`
+	Object  *string              `json:"object,omitzero"`
+	HasMore *bool                `json:"has_more,omitzero"`
+	Data    []InboxDraftListItem `json:"data,omitzero"`
 }
 
 type ListInboxLabelsResponse struct {
-	Object *string      `json:"object,omitempty"`
-	Data   []InboxLabel `json:"data,omitempty"`
+	Object *string      `json:"object,omitzero"`
+	Data   []InboxLabel `json:"data,omitzero"`
 }
 
 type ListInboxThreadEmailsQuery struct {
-	Latest *bool   `json:"latest,omitempty"`
-	Limit  *int64  `json:"limit,omitempty"`
-	After  *string `json:"after,omitempty"`
-	Before *string `json:"before,omitempty"`
+	Latest *bool   `json:"latest,omitzero"`
+	Limit  *int64  `json:"limit,omitzero"`
+	After  *string `json:"after,omitzero"`
+	Before *string `json:"before,omitzero"`
 }
 
 type ListInboxThreadEmailsResponse struct {
-	Object  *string            `json:"object,omitempty"`
-	HasMore *bool              `json:"has_more,omitempty"`
-	Data    []InboxThreadEmail `json:"data,omitempty"`
+	Object  *string            `json:"object,omitzero"`
+	HasMore *bool              `json:"has_more,omitzero"`
+	Data    []InboxThreadEmail `json:"data,omitzero"`
 }
 
 type ListInboxThreadsQuery struct {
-	Folder *string  `json:"folder,omitempty"`
-	Query  *string  `json:"query,omitempty"`
-	Label  []string `json:"label,omitempty"`
-	Limit  *int64   `json:"limit,omitempty"`
-	After  *string  `json:"after,omitempty"`
-	Before *string  `json:"before,omitempty"`
+	Folder *string  `json:"folder,omitzero"`
+	Query  *string  `json:"query,omitzero"`
+	Label  []string `json:"label,omitzero"`
+	Limit  *int64   `json:"limit,omitzero"`
+	After  *string  `json:"after,omitzero"`
+	Before *string  `json:"before,omitzero"`
 }
 
 type ListInboxThreadsResponse struct {
-	Object  *string               `json:"object,omitempty"`
-	HasMore *bool                 `json:"has_more,omitempty"`
-	Data    []InboxThreadListItem `json:"data,omitempty"`
+	Object  *string               `json:"object,omitzero"`
+	HasMore *bool                 `json:"has_more,omitzero"`
+	Data    []InboxThreadListItem `json:"data,omitzero"`
 }
 
 type ListInboxesQuery struct {
-	Limit  *int64  `json:"limit,omitempty"`
-	After  *string `json:"after,omitempty"`
-	Before *string `json:"before,omitempty"`
+	Limit  *int64  `json:"limit,omitzero"`
+	After  *string `json:"after,omitzero"`
+	Before *string `json:"before,omitzero"`
 }
 
 type ListInboxesResponse struct {
-	Object  *string         `json:"object,omitempty"`
-	HasMore *bool           `json:"has_more,omitempty"`
-	Data    []InboxListItem `json:"data,omitempty"`
+	Object  *string         `json:"object,omitzero"`
+	HasMore *bool           `json:"has_more,omitzero"`
+	Data    []InboxListItem `json:"data,omitzero"`
 }
 
 type ListLogsQuery struct {
-	Limit     *int64  `json:"limit,omitempty"`
-	After     *string `json:"after,omitempty"`
-	Before    *string `json:"before,omitempty"`
-	Type      *string `json:"type,omitempty"`
-	Since     *string `json:"since,omitempty"`
-	Until     *string `json:"until,omitempty"`
-	Recipient *string `json:"recipient,omitempty"`
-	Domain    *string `json:"domain,omitempty"`
-	DomainID  *string `json:"domain_id,omitempty"`
-	Tag       *string `json:"tag,omitempty"`
-	EmailID   *string `json:"email_id,omitempty"`
+	Limit     *int64  `json:"limit,omitzero"`
+	After     *string `json:"after,omitzero"`
+	Before    *string `json:"before,omitzero"`
+	Type      *string `json:"type,omitzero"`
+	Since     *string `json:"since,omitzero"`
+	Until     *string `json:"until,omitzero"`
+	Recipient *string `json:"recipient,omitzero"`
+	Domain    *string `json:"domain,omitzero"`
+	DomainID  *string `json:"domain_id,omitzero"`
+	Tag       *string `json:"tag,omitzero"`
+	EmailID   *string `json:"email_id,omitzero"`
 }
 
 type ListLogsResponse struct {
-	Object  *string    `json:"object,omitempty"`
-	HasMore *bool      `json:"has_more,omitempty"`
-	Data    []LogEvent `json:"data,omitempty"`
+	Object  *string    `json:"object,omitzero"`
+	HasMore *bool      `json:"has_more,omitzero"`
+	Data    []LogEvent `json:"data,omitzero"`
 }
 
 type ListPendingSignupsQuery struct {
-	Page    *int64  `json:"page,omitempty"`
-	PerPage *int64  `json:"per_page,omitempty"`
-	Q       *string `json:"q,omitempty"`
+	Page    *int64  `json:"page,omitzero"`
+	PerPage *int64  `json:"per_page,omitzero"`
+	Q       *string `json:"q,omitzero"`
 }
 
 type ListReceivedEmailAttachmentsResponse struct {
-	Object *string              `json:"object,omitempty"`
-	Data   []ReceivedAttachment `json:"data,omitempty"`
+	Object *string              `json:"object,omitzero"`
+	Data   []ReceivedAttachment `json:"data,omitzero"`
 }
 
 type ListReceivedEmailsQuery struct {
-	Limit    *int64  `json:"limit,omitempty"`
-	After    *string `json:"after,omitempty"`
-	Before   *string `json:"before,omitempty"`
-	To       *string `json:"to,omitempty"`
-	DomainID *string `json:"domain_id,omitempty"`
-	Unread   *bool   `json:"unread,omitempty"`
-	Q        *string `json:"q,omitempty"`
+	Limit    *int64  `json:"limit,omitzero"`
+	After    *string `json:"after,omitzero"`
+	Before   *string `json:"before,omitzero"`
+	To       *string `json:"to,omitzero"`
+	DomainID *string `json:"domain_id,omitzero"`
+	Unread   *bool   `json:"unread,omitzero"`
+	Q        *string `json:"q,omitzero"`
 }
 
 type ListReceivedEmailsResponse struct {
-	Object  *string                `json:"object,omitempty"`
-	HasMore *bool                  `json:"has_more,omitempty"`
-	Data    []ReceivedEmailSummary `json:"data,omitempty"`
+	Object  *string                `json:"object,omitzero"`
+	HasMore *bool                  `json:"has_more,omitzero"`
+	Data    []ReceivedEmailSummary `json:"data,omitzero"`
 	// UnreadCount: Unread emails matching the same to, domain_id and q filters (not in Resend)
-	UnreadCount *int64 `json:"unread_count,omitempty"`
+	UnreadCount *int64 `json:"unread_count,omitzero"`
 }
 
 type ListSegmentContactsQuery struct {
-	Limit *int64 `json:"limit,omitempty"`
-	Page  *int64 `json:"page,omitempty"`
+	Limit *int64 `json:"limit,omitzero"`
+	Page  *int64 `json:"page,omitzero"`
 }
 
 type ListSuppressionsQuery struct {
-	Q      *string `json:"q,omitempty"`
-	Reason *string `json:"reason,omitempty"`
-	Limit  *int64  `json:"limit,omitempty"`
+	Q      *string `json:"q,omitzero"`
+	Reason *string `json:"reason,omitzero"`
+	Limit  *int64  `json:"limit,omitzero"`
 }
 
 type ListTeamInvitesResponse struct {
@@ -1129,68 +1129,68 @@ type ListTeamMembersResponse struct {
 }
 
 type ListTemplatesQuery struct {
-	Limit  *int64  `json:"limit,omitempty"`
-	After  *string `json:"after,omitempty"`
-	Before *string `json:"before,omitempty"`
-	Q      *string `json:"q,omitempty"`
+	Limit  *int64  `json:"limit,omitzero"`
+	After  *string `json:"after,omitzero"`
+	Before *string `json:"before,omitzero"`
+	Q      *string `json:"q,omitzero"`
 }
 
 type ListWebhookDeliveriesQuery struct {
-	Status *string `json:"status,omitempty"`
-	Limit  *int64  `json:"limit,omitempty"`
-	After  *string `json:"after,omitempty"`
+	Status *string `json:"status,omitzero"`
+	Limit  *int64  `json:"limit,omitzero"`
+	After  *string `json:"after,omitzero"`
 }
 
 type ListWebhookDeliveriesResponse struct {
-	Object  *string           `json:"object,omitempty"`
-	HasMore *bool             `json:"has_more,omitempty"`
-	Data    []WebhookDelivery `json:"data,omitempty"`
+	Object  *string           `json:"object,omitzero"`
+	HasMore *bool             `json:"has_more,omitzero"`
+	Data    []WebhookDelivery `json:"data,omitzero"`
 }
 
 type ListWebhookEventAttemptsResponse struct {
-	Object  *string                                    `json:"object,omitempty"`
-	HasMore *bool                                      `json:"has_more,omitempty"`
-	Data    []ListWebhookEventAttemptsResponseDataItem `json:"data,omitempty"`
+	Object  *string                                    `json:"object,omitzero"`
+	HasMore *bool                                      `json:"has_more,omitzero"`
+	Data    []ListWebhookEventAttemptsResponseDataItem `json:"data,omitzero"`
 }
 
 type ListWebhookEventAttemptsResponseDataItem struct {
-	ID             *string `json:"id,omitempty"`
-	HTTPStatusCode *int64  `json:"http_status_code,omitempty"`
-	Response       *string `json:"response,omitempty"`
-	SentAt         *string `json:"sent_at,omitempty"`
-	DurationMs     *int64  `json:"duration_ms,omitempty"`
+	ID             *string          `json:"id,omitzero"`
+	HTTPStatusCode Nullable[int64]  `json:"http_status_code,omitzero"`
+	Response       Nullable[string] `json:"response,omitzero"`
+	SentAt         Nullable[string] `json:"sent_at,omitzero"`
+	DurationMs     Nullable[int64]  `json:"duration_ms,omitzero"`
 }
 
 type ListWebhookEventsQuery struct {
-	Limit  *int64  `json:"limit,omitempty"`
-	After  *string `json:"after,omitempty"`
-	Status *string `json:"status,omitempty"`
+	Limit  *int64  `json:"limit,omitzero"`
+	After  *string `json:"after,omitzero"`
+	Status *string `json:"status,omitzero"`
 }
 
 type ListWebhookEventsResponse struct {
-	Object  *string               `json:"object,omitempty"`
-	HasMore *bool                 `json:"has_more,omitempty"`
-	Data    []WebhookEventSummary `json:"data,omitempty"`
+	Object  *string               `json:"object,omitzero"`
+	HasMore *bool                 `json:"has_more,omitzero"`
+	Data    []WebhookEventSummary `json:"data,omitzero"`
 }
 
 type LogEvent struct {
-	Object    *string            `json:"object,omitempty"`
-	ID        *string            `json:"id,omitempty"`
-	Type      *string            `json:"type,omitempty"`
-	CreatedAt *string            `json:"created_at,omitempty"`
-	EmailID   *string            `json:"email_id,omitempty"`
-	From      *string            `json:"from,omitempty"`
-	To        []string           `json:"to,omitempty"`
-	Subject   *string            `json:"subject,omitempty"`
-	DomainID  *string            `json:"domain_id,omitempty"`
-	Tags      []LogEventTagsItem `json:"tags,omitempty"`
+	Object    *string            `json:"object,omitzero"`
+	ID        *string            `json:"id,omitzero"`
+	Type      *string            `json:"type,omitzero"`
+	CreatedAt *string            `json:"created_at,omitzero"`
+	EmailID   *string            `json:"email_id,omitzero"`
+	From      *string            `json:"from,omitzero"`
+	To        []string           `json:"to,omitzero"`
+	Subject   *string            `json:"subject,omitzero"`
+	DomainID  Nullable[string]   `json:"domain_id,omitzero"`
+	Tags      []LogEventTagsItem `json:"tags,omitzero"`
 	// Data: Event details: bounce type, clicked URL, error message, and similar
-	Data map[string]any `json:"data,omitempty"`
+	Data map[string]any `json:"data,omitzero"`
 }
 
 type LogEventTagsItem struct {
-	Name  *string `json:"name,omitempty"`
-	Value *string `json:"value,omitempty"`
+	Name  *string `json:"name,omitzero"`
+	Value *string `json:"value,omitzero"`
 }
 
 type MarkReceivedEmailsParams struct {
@@ -1199,9 +1199,9 @@ type MarkReceivedEmailsParams struct {
 }
 
 type MarkReceivedEmailsResponse struct {
-	Object  *string `json:"object,omitempty"`
-	Read    *bool   `json:"read,omitempty"`
-	Updated *int64  `json:"updated,omitempty"`
+	Object  *string `json:"object,omitzero"`
+	Read    *bool   `json:"read,omitzero"`
+	Updated *int64  `json:"updated,omitzero"`
 }
 
 type PendingSignup struct {
@@ -1221,8 +1221,8 @@ type PendingSignup struct {
 
 // PendingSignupConfirmationEmail: The confirmation email and its current status. Null when no email was queued for this signup, or for signups recorded before this was tracked.
 type PendingSignupConfirmationEmail struct {
-	ID     *string `json:"id,omitempty"`
-	Status *string `json:"status,omitempty"`
+	ID     *string `json:"id,omitzero"`
+	Status *string `json:"status,omitzero"`
 }
 
 type PendingSignupList struct {
@@ -1239,103 +1239,103 @@ type PendingSignupList struct {
 }
 
 type PreviewFormWelcomeEmailParams struct {
-	Subject  *string                              `json:"subject,omitempty"`
-	Markdown *string                              `json:"markdown,omitempty"`
-	Sample   *PreviewFormWelcomeEmailParamsSample `json:"sample,omitempty"`
+	Subject  *string                              `json:"subject,omitzero"`
+	Markdown *string                              `json:"markdown,omitzero"`
+	Sample   *PreviewFormWelcomeEmailParamsSample `json:"sample,omitzero"`
 }
 
 type PreviewFormWelcomeEmailParamsSample struct {
-	Email     *string `json:"email,omitempty"`
-	FirstName *string `json:"firstName,omitempty"`
-	LastName  *string `json:"lastName,omitempty"`
+	Email     *string `json:"email,omitzero"`
+	FirstName *string `json:"firstName,omitzero"`
+	LastName  *string `json:"lastName,omitzero"`
 }
 
 type PublishTemplateParams struct {
 	// ExpectedUpdatedAt: Not in Resend. The updated_at you loaded.
-	ExpectedUpdatedAt *string `json:"expected_updated_at,omitempty"`
+	ExpectedUpdatedAt *string `json:"expected_updated_at,omitzero"`
 }
 
 type ReceivedAttachment struct {
-	ID                 *string `json:"id,omitempty"`
-	Filename           *string `json:"filename,omitempty"`
-	ContentType        *string `json:"content_type,omitempty"`
-	ContentDisposition *string `json:"content_disposition,omitempty"`
-	ContentID          *string `json:"content_id,omitempty"`
-	Size               *int64  `json:"size,omitempty"`
+	ID                 *string          `json:"id,omitzero"`
+	Filename           *string          `json:"filename,omitzero"`
+	ContentType        *string          `json:"content_type,omitzero"`
+	ContentDisposition *string          `json:"content_disposition,omitzero"`
+	ContentID          Nullable[string] `json:"content_id,omitzero"`
+	Size               *int64           `json:"size,omitzero"`
 	// DownloadURL: Present on the attachment endpoints; valid for 15 minutes
-	DownloadURL *string `json:"download_url,omitempty"`
-	ExpiresAt   *string `json:"expires_at,omitempty"`
+	DownloadURL *string `json:"download_url,omitzero"`
+	ExpiresAt   *string `json:"expires_at,omitzero"`
 }
 
 type ReceivedEmail struct {
-	Object       *string                `json:"object,omitempty"`
-	ID           *string                `json:"id,omitempty"`
-	To           []string               `json:"to,omitempty"`
-	From         *string                `json:"from,omitempty"`
-	CreatedAt    *string                `json:"created_at,omitempty"`
-	Subject      *string                `json:"subject,omitempty"`
-	Bcc          []string               `json:"bcc,omitempty"`
-	Cc           []string               `json:"cc,omitempty"`
-	ReplyTo      []string               `json:"reply_to,omitempty"`
-	ReceivedFor  []string               `json:"received_for,omitempty"`
-	MessageID    *string                `json:"message_id,omitempty"`
-	Attachments  []ReceivedAttachment   `json:"attachments,omitempty"`
-	Status       *string                `json:"status,omitempty"`
-	EnvelopeFrom *string                `json:"envelope_from,omitempty"`
-	EnvelopeTo   []string               `json:"envelope_to,omitempty"`
-	DomainID     *string                `json:"domain_id,omitempty"`
-	Size         *int64                 `json:"size,omitempty"`
-	Verdicts     *ReceivedEmailVerdicts `json:"verdicts,omitempty"`
-	InReplyTo    *string                `json:"in_reply_to,omitempty"`
-	References   []string               `json:"references,omitempty"`
-	HTML         *string                `json:"html,omitempty"`
-	Text         *string                `json:"text,omitempty"`
-	Headers      map[string]string      `json:"headers,omitempty"`
-	Raw          *ReceivedEmailRaw      `json:"raw,omitempty"`
+	Object       *string                    `json:"object,omitzero"`
+	ID           *string                    `json:"id,omitzero"`
+	To           []string                   `json:"to,omitzero"`
+	From         *string                    `json:"from,omitzero"`
+	CreatedAt    *string                    `json:"created_at,omitzero"`
+	Subject      *string                    `json:"subject,omitzero"`
+	Bcc          []string                   `json:"bcc,omitzero"`
+	Cc           []string                   `json:"cc,omitzero"`
+	ReplyTo      []string                   `json:"reply_to,omitzero"`
+	ReceivedFor  []string                   `json:"received_for,omitzero"`
+	MessageID    *string                    `json:"message_id,omitzero"`
+	Attachments  []ReceivedAttachment       `json:"attachments,omitzero"`
+	Status       *string                    `json:"status,omitzero"`
+	EnvelopeFrom Nullable[string]           `json:"envelope_from,omitzero"`
+	EnvelopeTo   []string                   `json:"envelope_to,omitzero"`
+	DomainID     Nullable[string]           `json:"domain_id,omitzero"`
+	Size         Nullable[int64]            `json:"size,omitzero"`
+	Verdicts     *ReceivedEmailVerdicts     `json:"verdicts,omitzero"`
+	InReplyTo    Nullable[string]           `json:"in_reply_to,omitzero"`
+	References   []string                   `json:"references,omitzero"`
+	HTML         Nullable[string]           `json:"html,omitzero"`
+	Text         Nullable[string]           `json:"text,omitzero"`
+	Headers      map[string]string          `json:"headers,omitzero"`
+	Raw          Nullable[ReceivedEmailRaw] `json:"raw,omitzero"`
 }
 
 type ReceivedEmailRaw struct {
-	DownloadURL *string `json:"download_url,omitempty"`
-	ExpiresAt   *string `json:"expires_at,omitempty"`
+	DownloadURL *string `json:"download_url,omitzero"`
+	ExpiresAt   *string `json:"expires_at,omitzero"`
 }
 
 type ReceivedEmailSummary struct {
-	Object       *string                       `json:"object,omitempty"`
-	ID           *string                       `json:"id,omitempty"`
-	To           []string                      `json:"to,omitempty"`
-	From         *string                       `json:"from,omitempty"`
-	CreatedAt    *string                       `json:"created_at,omitempty"`
-	Subject      *string                       `json:"subject,omitempty"`
-	Bcc          []string                      `json:"bcc,omitempty"`
-	Cc           []string                      `json:"cc,omitempty"`
-	ReplyTo      []string                      `json:"reply_to,omitempty"`
-	ReceivedFor  []string                      `json:"received_for,omitempty"`
-	MessageID    *string                       `json:"message_id,omitempty"`
-	Attachments  []ReceivedAttachment          `json:"attachments,omitempty"`
-	Status       *string                       `json:"status,omitempty"`
-	EnvelopeFrom *string                       `json:"envelope_from,omitempty"`
-	EnvelopeTo   []string                      `json:"envelope_to,omitempty"`
-	DomainID     *string                       `json:"domain_id,omitempty"`
-	Size         *int64                        `json:"size,omitempty"`
-	Verdicts     *ReceivedEmailSummaryVerdicts `json:"verdicts,omitempty"`
-	InReplyTo    *string                       `json:"in_reply_to,omitempty"`
-	References   []string                      `json:"references,omitempty"`
+	Object       *string                       `json:"object,omitzero"`
+	ID           *string                       `json:"id,omitzero"`
+	To           []string                      `json:"to,omitzero"`
+	From         *string                       `json:"from,omitzero"`
+	CreatedAt    *string                       `json:"created_at,omitzero"`
+	Subject      *string                       `json:"subject,omitzero"`
+	Bcc          []string                      `json:"bcc,omitzero"`
+	Cc           []string                      `json:"cc,omitzero"`
+	ReplyTo      []string                      `json:"reply_to,omitzero"`
+	ReceivedFor  []string                      `json:"received_for,omitzero"`
+	MessageID    *string                       `json:"message_id,omitzero"`
+	Attachments  []ReceivedAttachment          `json:"attachments,omitzero"`
+	Status       *string                       `json:"status,omitzero"`
+	EnvelopeFrom Nullable[string]              `json:"envelope_from,omitzero"`
+	EnvelopeTo   []string                      `json:"envelope_to,omitzero"`
+	DomainID     Nullable[string]              `json:"domain_id,omitzero"`
+	Size         Nullable[int64]               `json:"size,omitzero"`
+	Verdicts     *ReceivedEmailSummaryVerdicts `json:"verdicts,omitzero"`
+	InReplyTo    Nullable[string]              `json:"in_reply_to,omitzero"`
+	References   []string                      `json:"references,omitzero"`
 }
 
 type ReceivedEmailSummaryVerdicts struct {
-	SPF   *string `json:"spf,omitempty"`
-	DKIM  *string `json:"dkim,omitempty"`
-	DMARC *string `json:"dmarc,omitempty"`
-	Spam  *string `json:"spam,omitempty"`
-	Virus *string `json:"virus,omitempty"`
+	SPF   Nullable[string] `json:"spf,omitzero"`
+	DKIM  Nullable[string] `json:"dkim,omitzero"`
+	DMARC Nullable[string] `json:"dmarc,omitzero"`
+	Spam  Nullable[string] `json:"spam,omitzero"`
+	Virus Nullable[string] `json:"virus,omitzero"`
 }
 
 type ReceivedEmailVerdicts struct {
-	SPF   *string `json:"spf,omitempty"`
-	DKIM  *string `json:"dkim,omitempty"`
-	DMARC *string `json:"dmarc,omitempty"`
-	Spam  *string `json:"spam,omitempty"`
-	Virus *string `json:"virus,omitempty"`
+	SPF   Nullable[string] `json:"spf,omitzero"`
+	DKIM  Nullable[string] `json:"dkim,omitzero"`
+	DMARC Nullable[string] `json:"dmarc,omitzero"`
+	Spam  Nullable[string] `json:"spam,omitzero"`
+	Virus Nullable[string] `json:"virus,omitzero"`
 }
 
 type RemovePendingSignupResponse struct {
@@ -1343,65 +1343,65 @@ type RemovePendingSignupResponse struct {
 }
 
 type RemoveSuppressionsBatchParams struct {
-	Emails []string `json:"emails,omitempty"`
-	IDs    []string `json:"ids,omitempty"`
+	Emails []string `json:"emails,omitzero"`
+	IDs    []string `json:"ids,omitzero"`
 }
 
 type ReplayWebhookEventResponse struct {
-	Object    *string `json:"object,omitempty"`
-	ID        *string `json:"id,omitempty"`
-	Delivered *bool   `json:"delivered,omitempty"`
-	Error     *string `json:"error,omitempty"`
+	Object    *string `json:"object,omitzero"`
+	ID        *string `json:"id,omitzero"`
+	Delivered *bool   `json:"delivered,omitzero"`
+	Error     *string `json:"error,omitzero"`
 }
 
 type ReplyToInboxThreadEmailParams struct {
-	Cc      StringList `json:"cc,omitempty"`
-	Bcc     StringList `json:"bcc,omitempty"`
-	HTML    *string    `json:"html,omitempty"`
-	Text    *string    `json:"text,omitempty"`
-	Subject *string    `json:"subject,omitempty"`
+	Cc      StringList `json:"cc,omitzero"`
+	Bcc     StringList `json:"bcc,omitzero"`
+	HTML    *string    `json:"html,omitzero"`
+	Text    *string    `json:"text,omitzero"`
+	Subject *string    `json:"subject,omitzero"`
 }
 
 type ReplyToReceivedEmailParams struct {
 	// From: One of the team's reply addresses for this message; see the dashboard detail's reply_from
-	From *string    `json:"from,omitempty"`
-	To   StringList `json:"to,omitempty"`
-	Cc   StringList `json:"cc,omitempty"`
+	From *string    `json:"from,omitzero"`
+	To   StringList `json:"to,omitzero"`
+	Cc   StringList `json:"cc,omitzero"`
 	// Subject: Defaults to Re: plus the original subject
-	Subject *string `json:"subject,omitempty"`
-	Text    *string `json:"text,omitempty"`
-	HTML    *string `json:"html,omitempty"`
+	Subject *string `json:"subject,omitzero"`
+	Text    *string `json:"text,omitzero"`
+	HTML    *string `json:"html,omitzero"`
 }
 
 type ReplyToReceivedEmailResponse struct {
-	ID *string `json:"id,omitempty"`
+	ID *string `json:"id,omitzero"`
 }
 
 type RetryWebhookDeliveryResponse struct {
-	Success  *bool            `json:"success,omitempty"`
-	Message  *string          `json:"message,omitempty"`
-	Delivery *WebhookDelivery `json:"delivery,omitempty"`
+	Success  *bool            `json:"success,omitzero"`
+	Message  *string          `json:"message,omitzero"`
+	Delivery *WebhookDelivery `json:"delivery,omitzero"`
 }
 
 type RevokeAPIKeyResponse struct {
-	Success *bool `json:"success,omitempty"`
+	Success *bool `json:"success,omitzero"`
 }
 
 type RotateWebhookSigningSecretResponse struct {
-	Object        *string `json:"object,omitempty"`
-	ID            *string `json:"id,omitempty"`
-	SigningSecret *string `json:"signing_secret,omitempty"`
+	Object        *string `json:"object,omitzero"`
+	ID            *string `json:"id,omitzero"`
+	SigningSecret *string `json:"signing_secret,omitzero"`
 }
 
 type Segment struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Description  *string `json:"description,omitempty"`
-	Color        *string `json:"color,omitempty"`
-	ContactCount *int64  `json:"contact_count,omitempty"`
-	CreatedAt    *string `json:"created_at,omitempty"`
-	UpdatedAt    *string `json:"updated_at,omitempty"`
-	Object       *string `json:"object,omitempty"`
+	ID           string           `json:"id"`
+	Name         string           `json:"name"`
+	Description  Nullable[string] `json:"description,omitzero"`
+	Color        Nullable[string] `json:"color,omitzero"`
+	ContactCount *int64           `json:"contact_count,omitzero"`
+	CreatedAt    *string          `json:"created_at,omitzero"`
+	UpdatedAt    *string          `json:"updated_at,omitzero"`
+	Object       *string          `json:"object,omitzero"`
 }
 
 type SegmentList struct {
@@ -1409,21 +1409,21 @@ type SegmentList struct {
 	Data         []SegmentSummary `json:"data"`
 	Total        int64            `json:"total"`
 	SegmentLimit int64            `json:"segment_limit"`
-	Tier         *string          `json:"tier,omitempty"`
+	Tier         *string          `json:"tier,omitzero"`
 }
 
 type SegmentSummary struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Description  *string `json:"description,omitempty"`
-	Color        *string `json:"color,omitempty"`
-	ContactCount *int64  `json:"contact_count,omitempty"`
-	CreatedAt    *string `json:"created_at,omitempty"`
-	UpdatedAt    *string `json:"updated_at,omitempty"`
+	ID           string           `json:"id"`
+	Name         string           `json:"name"`
+	Description  Nullable[string] `json:"description,omitzero"`
+	Color        Nullable[string] `json:"color,omitzero"`
+	ContactCount *int64           `json:"contact_count,omitzero"`
+	CreatedAt    *string          `json:"created_at,omitzero"`
+	UpdatedAt    *string          `json:"updated_at,omitzero"`
 }
 
 type SendBroadcastParams struct {
-	ScheduledAt *string `json:"scheduled_at,omitempty"`
+	ScheduledAt *string `json:"scheduled_at,omitzero"`
 }
 
 type SendBroadcastTestParams struct {
@@ -1433,42 +1433,42 @@ type SendBroadcastTestParams struct {
 // SendEmailRequest: from and subject are required, unless a template supplies them. Give a body as html and/or text, or name a published template; not both.
 type SendEmailRequest struct {
 	// Template: Send a published template instead of html and text, as in Resend. The published version is rendered with the variables, then every normal send rule ap
-	Template *SendEmailRequestTemplate `json:"template,omitempty"`
+	Template *SendEmailRequestTemplate `json:"template,omitzero"`
 	// Attachments: Up to 10 files, base64 encoded, 25 MB per message in total. A content_id makes the part inline: reference it from the HTML as cid:<content_id>.
-	Attachments []SendEmailRequestAttachmentsItem `json:"attachments,omitempty"`
+	Attachments []SendEmailRequestAttachmentsItem `json:"attachments,omitzero"`
 	// From: Sender email address (must belong to a verified domain)
-	From *string `json:"from,omitempty"`
+	From *string `json:"from,omitzero"`
 	// To: One recipient address, or a list of them
 	To StringList `json:"to"`
 	// Cc: Cc recipients
-	Cc StringList `json:"cc,omitempty"`
+	Cc StringList `json:"cc,omitzero"`
 	// Bcc: Bcc recipients
-	Bcc StringList `json:"bcc,omitempty"`
+	Bcc StringList `json:"bcc,omitzero"`
 	// ReplyTo: Reply-To address or addresses
-	ReplyTo StringList `json:"reply_to,omitempty"`
+	ReplyTo StringList `json:"reply_to,omitzero"`
 	// Subject: Email subject line
-	Subject *string `json:"subject,omitempty"`
+	Subject *string `json:"subject,omitzero"`
 	// Tags: Up to 50 name/value pairs, returned on events and webhooks and filterable in logs
-	Tags []SendEmailRequestTagsItem `json:"tags,omitempty"`
+	Tags []SendEmailRequestTagsItem `json:"tags,omitzero"`
 	// Headers: Custom headers, e.g. X-Entity-Ref-ID
-	Headers map[string]string `json:"headers,omitempty"`
+	Headers map[string]string `json:"headers,omitzero"`
 	// ScheduledAt: Send later, up to 30 days ahead (ISO 8601)
-	ScheduledAt *string `json:"scheduled_at,omitempty"`
+	ScheduledAt *string `json:"scheduled_at,omitzero"`
 	// HTML: HTML body of the email. Include `{{unsubscribe_url}}` (or the Resend-compatible `{{{RESEND_UNSUBSCRIBE_URL}}}`) anywhere in the body and SMTPfast subs
-	HTML *string `json:"html,omitempty"`
+	HTML *string `json:"html,omitzero"`
 	// Text: Plain text fallback body. Supports the same `{{unsubscribe_url}}` placeholder as the HTML body.
-	Text *string `json:"text,omitempty"`
+	Text *string `json:"text,omitzero"`
 }
 
 type SendEmailRequestAttachmentsItem struct {
 	Filename string `json:"filename"`
 	// Content: Base64-encoded file content
 	Content     string  `json:"content"`
-	ContentType *string `json:"content_type,omitempty"`
+	ContentType *string `json:"content_type,omitzero"`
 	// ContentID: Letters, digits, . _ - with an optional @domain; sent inline as multipart/related
-	ContentID *string `json:"content_id,omitempty"`
+	ContentID *string `json:"content_id,omitzero"`
 	// Inline: Send inline even without a content_id (a Content-ID is derived from the filename)
-	Inline *bool `json:"inline,omitempty"`
+	Inline *bool `json:"inline,omitzero"`
 }
 
 type SendEmailRequestTagsItem struct {
@@ -1481,69 +1481,69 @@ type SendEmailRequestTemplate struct {
 	// ID: The template id or alias.
 	ID string `json:"id"`
 	// Variables: Values by variable key. A missing value uses the inline fallback ({{{KEY|default}}}), then the variable's fallback_value. A declared variable with nei
-	Variables map[string]any `json:"variables,omitempty"`
+	Variables map[string]any `json:"variables,omitzero"`
 }
 
 type SendInboxDraftParams struct {
 	// Revision: Send only if the draft is still at this revision, the one that was reviewed. Not in Resend.
-	Revision *int64 `json:"revision,omitempty"`
+	Revision *int64 `json:"revision,omitzero"`
 }
 
 type SendInboxDraftResponse struct {
-	Object   *string `json:"object,omitempty"`
-	ID       *string `json:"id,omitempty"`
-	ThreadID *string `json:"thread_id,omitempty"`
-	EmailID  *string `json:"email_id,omitempty"`
+	Object   *string `json:"object,omitzero"`
+	ID       *string `json:"id,omitzero"`
+	ThreadID *string `json:"thread_id,omitzero"`
+	EmailID  *string `json:"email_id,omitzero"`
 	// SentRevision: Present with warning: the revision that went out. Not in Resend.
-	SentRevision *int64 `json:"sent_revision,omitempty"`
+	SentRevision *int64 `json:"sent_revision,omitzero"`
 	// Warning: Present when the email went out but the draft changed or was claimed again while the send ran, so it was not marked sent. Not in Resend.
-	Warning *string `json:"warning,omitempty"`
+	Warning *string `json:"warning,omitzero"`
 }
 
 type ShareEmailParams struct {
 	// ExpiresIn: Lifetime in seconds (60 to 2592000)
-	ExpiresIn *int64 `json:"expires_in,omitempty"`
+	ExpiresIn *int64 `json:"expires_in,omitzero"`
 }
 
 type ShareEmailResponse struct {
-	Object    *string `json:"object,omitempty"`
-	ID        *string `json:"id,omitempty"`
-	URL       *string `json:"url,omitempty"`
-	ExpiresAt *string `json:"expires_at,omitempty"`
+	Object    *string `json:"object,omitzero"`
+	ID        *string `json:"id,omitzero"`
+	URL       *string `json:"url,omitzero"`
+	ExpiresAt *string `json:"expires_at,omitzero"`
 }
 
 type SignupForm struct {
-	Object                    string   `json:"object"`
-	ID                        string   `json:"id"`
-	Name                      string   `json:"name"`
-	Fields                    []string `json:"fields"`
-	ButtonText                string   `json:"button_text"`
-	ButtonColor               string   `json:"button_color"`
-	SuccessMessage            string   `json:"success_message"`
-	DoubleOptIn               bool     `json:"double_opt_in"`
-	RedirectURL               *string  `json:"redirect_url,omitempty"`
-	CaptchaEnabled            bool     `json:"captcha_enabled"`
-	CaptchaProvider           string   `json:"captcha_provider"`
-	TurnstileSiteKey          *string  `json:"turnstile_site_key,omitempty"`
-	TurnstileSecretConfigured bool     `json:"turnstile_secret_configured"`
-	BlockDisposableEmails     bool     `json:"block_disposable_emails"`
-	Active                    bool     `json:"active"`
+	Object                    string           `json:"object"`
+	ID                        string           `json:"id"`
+	Name                      string           `json:"name"`
+	Fields                    []string         `json:"fields"`
+	ButtonText                string           `json:"button_text"`
+	ButtonColor               string           `json:"button_color"`
+	SuccessMessage            string           `json:"success_message"`
+	DoubleOptIn               bool             `json:"double_opt_in"`
+	RedirectURL               Nullable[string] `json:"redirect_url,omitzero"`
+	CaptchaEnabled            bool             `json:"captcha_enabled"`
+	CaptchaProvider           string           `json:"captcha_provider"`
+	TurnstileSiteKey          Nullable[string] `json:"turnstile_site_key,omitzero"`
+	TurnstileSecretConfigured bool             `json:"turnstile_secret_configured"`
+	BlockDisposableEmails     bool             `json:"block_disposable_emails"`
+	Active                    bool             `json:"active"`
 	// ConfirmationEmailFrom: Sender of the double opt-in confirmation email. Create, retrieve and update return it; list items leave it out.
-	ConfirmationEmailFrom *string `json:"confirmation_email_from,omitempty"`
+	ConfirmationEmailFrom Nullable[string] `json:"confirmation_email_from,omitzero"`
 	// WelcomeEmailEnabled: Create, retrieve and update return it; list items leave it out.
-	WelcomeEmailEnabled *bool `json:"welcome_email_enabled,omitempty"`
+	WelcomeEmailEnabled *bool `json:"welcome_email_enabled,omitzero"`
 	// WelcomeEmailFrom: Create, retrieve and update return it; list items leave it out.
-	WelcomeEmailFrom *string `json:"welcome_email_from,omitempty"`
+	WelcomeEmailFrom Nullable[string] `json:"welcome_email_from,omitzero"`
 	// WelcomeEmailSubject: Create, retrieve and update return it; list items leave it out.
-	WelcomeEmailSubject *string `json:"welcome_email_subject,omitempty"`
+	WelcomeEmailSubject Nullable[string] `json:"welcome_email_subject,omitzero"`
 	// WelcomeEmailMarkdown: Create, retrieve and update return it; list items leave it out.
-	WelcomeEmailMarkdown *string `json:"welcome_email_markdown,omitempty"`
+	WelcomeEmailMarkdown Nullable[string] `json:"welcome_email_markdown,omitzero"`
 	// WelcomeStats: Welcome emails sent and skipped for this form, and how many were delivered, opened and clicked. List items leave it out.
-	WelcomeStats *SignupFormWelcomeStats `json:"welcome_stats,omitempty"`
+	WelcomeStats *SignupFormWelcomeStats `json:"welcome_stats,omitzero"`
 	// PendingConfirmationsCount: Signups waiting on their confirmation click. List items leave it out.
-	PendingConfirmationsCount *int64 `json:"pending_confirmations_count,omitempty"`
+	PendingConfirmationsCount *int64 `json:"pending_confirmations_count,omitzero"`
 	// RecentPendingConfirmations: Up to 5 of the newest pending signups. List items leave it out.
-	RecentPendingConfirmations []SignupFormRecentPendingConfirmationsItem `json:"recent_pending_confirmations,omitempty"`
+	RecentPendingConfirmations []SignupFormRecentPendingConfirmationsItem `json:"recent_pending_confirmations,omitzero"`
 	CreatedAt                  string                                     `json:"created_at"`
 	UpdatedAt                  string                                     `json:"updated_at"`
 }
@@ -1561,21 +1561,21 @@ type SignupFormList struct {
 }
 
 type SignupFormRecentPendingConfirmationsItem struct {
-	ID        *string `json:"id,omitempty"`
-	Email     *string `json:"email,omitempty"`
-	FirstName *string `json:"first_name,omitempty"`
-	LastName  *string `json:"last_name,omitempty"`
-	CreatedAt *string `json:"created_at,omitempty"`
-	ExpiresAt *string `json:"expires_at,omitempty"`
+	ID        *string          `json:"id,omitzero"`
+	Email     *string          `json:"email,omitzero"`
+	FirstName Nullable[string] `json:"first_name,omitzero"`
+	LastName  Nullable[string] `json:"last_name,omitzero"`
+	CreatedAt *string          `json:"created_at,omitzero"`
+	ExpiresAt *string          `json:"expires_at,omitzero"`
 }
 
 // SignupFormWelcomeStats: Welcome emails sent and skipped for this form, and how many were delivered, opened and clicked. List items leave it out.
 type SignupFormWelcomeStats struct {
-	Sent      *int64 `json:"sent,omitempty"`
-	Skipped   *int64 `json:"skipped,omitempty"`
-	Delivered *int64 `json:"delivered,omitempty"`
-	Opened    *int64 `json:"opened,omitempty"`
-	Clicked   *int64 `json:"clicked,omitempty"`
+	Sent      *int64 `json:"sent,omitzero"`
+	Skipped   *int64 `json:"skipped,omitzero"`
+	Delivered *int64 `json:"delivered,omitzero"`
+	Opened    *int64 `json:"opened,omitzero"`
+	Clicked   *int64 `json:"clicked,omitzero"`
 }
 
 type Success struct {
@@ -1583,21 +1583,21 @@ type Success struct {
 }
 
 type Suppression struct {
-	Object         *string        `json:"object,omitempty"`
-	ID             string         `json:"id"`
-	Email          string         `json:"email"`
-	Reason         string         `json:"reason"`
-	Source         string         `json:"source"`
-	BounceType     *string        `json:"bounce_type,omitempty"`
-	DiagnosticCode *string        `json:"diagnostic_code,omitempty"`
-	FeedbackID     *string        `json:"feedback_id,omitempty"`
-	EmailID        *string        `json:"email_id,omitempty"`
-	EventID        *string        `json:"event_id,omitempty"`
-	CreatedAt      string         `json:"created_at"`
-	UpdatedAt      *string        `json:"updated_at,omitempty"`
-	Metadata       map[string]any `json:"metadata,omitempty"`
-	RelatedEmail   map[string]any `json:"related_email,omitempty"`
-	RelatedEvent   map[string]any `json:"related_event,omitempty"`
+	Object         *string          `json:"object,omitzero"`
+	ID             string           `json:"id"`
+	Email          string           `json:"email"`
+	Reason         string           `json:"reason"`
+	Source         string           `json:"source"`
+	BounceType     Nullable[string] `json:"bounce_type,omitzero"`
+	DiagnosticCode Nullable[string] `json:"diagnostic_code,omitzero"`
+	FeedbackID     Nullable[string] `json:"feedback_id,omitzero"`
+	EmailID        Nullable[string] `json:"email_id,omitzero"`
+	EventID        Nullable[string] `json:"event_id,omitzero"`
+	CreatedAt      string           `json:"created_at"`
+	UpdatedAt      *string          `json:"updated_at,omitzero"`
+	Metadata       map[string]any   `json:"metadata,omitzero"`
+	RelatedEmail   map[string]any   `json:"related_email,omitzero"`
+	RelatedEvent   map[string]any   `json:"related_event,omitzero"`
 }
 
 type SuppressionDeleted struct {
@@ -1620,18 +1620,18 @@ type TeamInvite struct {
 	ID        string  `json:"id"`
 	Email     string  `json:"email"`
 	Role      string  `json:"role"`
-	CreatedAt *string `json:"created_at,omitempty"`
+	CreatedAt *string `json:"created_at,omitzero"`
 	ExpiresAt string  `json:"expires_at"`
 }
 
 type TeamMember struct {
 	Object string `json:"object"`
 	// ID: The membership ID
-	ID     string  `json:"id"`
-	UserID string  `json:"user_id"`
-	Email  string  `json:"email"`
-	Name   *string `json:"name,omitempty"`
-	Role   string  `json:"role"`
+	ID     string           `json:"id"`
+	UserID string           `json:"user_id"`
+	Email  string           `json:"email"`
+	Name   Nullable[string] `json:"name,omitzero"`
+	Role   string           `json:"role"`
 	// CanManageBilling: Always true for owners
 	CanManageBilling bool `json:"can_manage_billing"`
 	// CreatedAt: When they joined
@@ -1639,45 +1639,45 @@ type TeamMember struct {
 }
 
 type Template struct {
-	Object *string `json:"object,omitempty"`
-	ID     *string `json:"id,omitempty"`
+	Object *string `json:"object,omitzero"`
+	ID     *string `json:"id,omitzero"`
 	// CurrentVersionID: Id of the published version; null until the first publish.
-	CurrentVersionID *string            `json:"current_version_id,omitempty"`
-	Alias            *string            `json:"alias,omitempty"`
-	Name             *string            `json:"name,omitempty"`
-	Status           *string            `json:"status,omitempty"`
-	PublishedAt      *string            `json:"published_at,omitempty"`
-	CreatedAt        *string            `json:"created_at,omitempty"`
-	UpdatedAt        *string            `json:"updated_at,omitempty"`
-	From             *string            `json:"from,omitempty"`
-	Subject          *string            `json:"subject,omitempty"`
-	ReplyTo          []string           `json:"reply_to,omitempty"`
-	HTML             *string            `json:"html,omitempty"`
-	Text             *string            `json:"text,omitempty"`
-	Variables        []TemplateVariable `json:"variables,omitempty"`
+	CurrentVersionID Nullable[string]   `json:"current_version_id,omitzero"`
+	Alias            Nullable[string]   `json:"alias,omitzero"`
+	Name             *string            `json:"name,omitzero"`
+	Status           *string            `json:"status,omitzero"`
+	PublishedAt      Nullable[string]   `json:"published_at,omitzero"`
+	CreatedAt        *string            `json:"created_at,omitzero"`
+	UpdatedAt        *string            `json:"updated_at,omitzero"`
+	From             Nullable[string]   `json:"from,omitzero"`
+	Subject          Nullable[string]   `json:"subject,omitzero"`
+	ReplyTo          []string           `json:"reply_to,omitzero"`
+	HTML             Nullable[string]   `json:"html,omitzero"`
+	Text             Nullable[string]   `json:"text,omitzero"`
+	Variables        []TemplateVariable `json:"variables,omitzero"`
 	// HasUnpublishedVersions: The draft differs from the published version. Always true before the first publish.
-	HasUnpublishedVersions *bool `json:"has_unpublished_versions,omitempty"`
+	HasUnpublishedVersions *bool `json:"has_unpublished_versions,omitzero"`
 	// PreviewText: Not in Resend.
-	PreviewText *string `json:"preview_text,omitempty"`
+	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Markdown: Not in Resend.
-	Markdown *string `json:"markdown,omitempty"`
+	Markdown Nullable[string] `json:"markdown,omitzero"`
 	// Category: Not in Resend.
-	Category *string `json:"category,omitempty"`
+	Category Nullable[string] `json:"category,omitzero"`
 }
 
 type TemplateDeleted struct {
-	Object  *string `json:"object,omitempty"`
-	ID      *string `json:"id,omitempty"`
-	Deleted *bool   `json:"deleted,omitempty"`
+	Object  *string `json:"object,omitzero"`
+	ID      *string `json:"id,omitzero"`
+	Deleted *bool   `json:"deleted,omitzero"`
 }
 
 // TemplateError: Resend's error shape, plus error with the same text as message.
 type TemplateError struct {
-	StatusCode *int64 `json:"statusCode,omitempty"`
+	StatusCode *int64 `json:"statusCode,omitzero"`
 	// Name: validation_error, not_found or conflict
-	Name    *string `json:"name,omitempty"`
-	Message *string `json:"message,omitempty"`
-	Error   *string `json:"error,omitempty"`
+	Name    *string `json:"name,omitzero"`
+	Message *string `json:"message,omitzero"`
+	Error   *string `json:"error,omitzero"`
 }
 
 type TemplateList struct {
@@ -1688,86 +1688,86 @@ type TemplateList struct {
 
 // TemplateRef: Resend's { id, object }. Create, update and publish also return the fields below (not in Resend): updated_at is the revision that write set, to pass a
 type TemplateRef struct {
-	ID     *string `json:"id,omitempty"`
-	Object *string `json:"object,omitempty"`
+	ID     *string `json:"id,omitzero"`
+	Object *string `json:"object,omitzero"`
 	// UpdatedAt: Not in Resend. The revision this write created.
-	UpdatedAt *string `json:"updated_at,omitempty"`
+	UpdatedAt *string `json:"updated_at,omitzero"`
 	// Status: Not in Resend.
-	Status *string `json:"status,omitempty"`
+	Status *string `json:"status,omitzero"`
 	// PublishedAt: Not in Resend.
-	PublishedAt *string `json:"published_at,omitempty"`
+	PublishedAt Nullable[string] `json:"published_at,omitzero"`
 	// HasUnpublishedVersions: Not in Resend.
-	HasUnpublishedVersions *bool `json:"has_unpublished_versions,omitempty"`
+	HasUnpublishedVersions *bool `json:"has_unpublished_versions,omitzero"`
 }
 
 type TemplateSummary struct {
-	ID          *string `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	Status      *string `json:"status,omitempty"`
-	PublishedAt *string `json:"published_at,omitempty"`
-	CreatedAt   *string `json:"created_at,omitempty"`
-	UpdatedAt   *string `json:"updated_at,omitempty"`
-	Alias       *string `json:"alias,omitempty"`
+	ID          *string          `json:"id,omitzero"`
+	Name        *string          `json:"name,omitzero"`
+	Status      *string          `json:"status,omitzero"`
+	PublishedAt Nullable[string] `json:"published_at,omitzero"`
+	CreatedAt   *string          `json:"created_at,omitzero"`
+	UpdatedAt   *string          `json:"updated_at,omitzero"`
+	Alias       Nullable[string] `json:"alias,omitzero"`
 	// Subject: Not in Resend.
-	Subject *string `json:"subject,omitempty"`
+	Subject Nullable[string] `json:"subject,omitzero"`
 	// Category: Not in Resend.
-	Category *string `json:"category,omitempty"`
+	Category Nullable[string] `json:"category,omitzero"`
 	// HasUnpublishedVersions: Not in Resend's list rows.
-	HasUnpublishedVersions *bool `json:"has_unpublished_versions,omitempty"`
+	HasUnpublishedVersions *bool `json:"has_unpublished_versions,omitzero"`
 }
 
 type TemplateVariable struct {
-	ID *string `json:"id,omitempty"`
+	ID *string `json:"id,omitzero"`
 	// Key: Use it in the content as {{{KEY}}}. Letters, digits and underscores. FIRST_NAME, LAST_NAME, EMAIL, UNSUBSCRIBE_URL, RESEND_UNSUBSCRIBE_URL, contact an
 	Key  string `json:"key"`
 	Type string `json:"type"`
 	// FallbackValue: Used when a send gives no value. Must match the type. Without one, every send must pass a value for this variable or it answers 422.
-	FallbackValue any     `json:"fallback_value,omitempty"`
-	CreatedAt     *string `json:"created_at,omitempty"`
-	UpdatedAt     *string `json:"updated_at,omitempty"`
+	FallbackValue any     `json:"fallback_value,omitzero"`
+	CreatedAt     *string `json:"created_at,omitzero"`
+	UpdatedAt     *string `json:"updated_at,omitzero"`
 }
 
 type TestWebhookResponse struct {
 	// Success: Whether the test payload was delivered successfully
-	Success *bool `json:"success,omitempty"`
+	Success *bool `json:"success,omitzero"`
 	// Status: HTTP status code returned by the webhook endpoint, null when it did not answer
-	Status   *int64           `json:"status,omitempty"`
-	Message  *string          `json:"message,omitempty"`
-	Delivery *WebhookDelivery `json:"delivery,omitempty"`
+	Status   Nullable[int64]  `json:"status,omitzero"`
+	Message  *string          `json:"message,omitzero"`
+	Delivery *WebhookDelivery `json:"delivery,omitzero"`
 }
 
 type UpdateAPIKeyParams struct {
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitzero"`
 	// Scopes: Replaces the key's scopes
-	Scopes []string `json:"scopes,omitempty"`
+	Scopes []string `json:"scopes,omitzero"`
 }
 
 type UpdateAPIKeyResponse struct {
-	ID        *string  `json:"id,omitempty"`
-	Name      *string  `json:"name,omitempty"`
-	KeyPrefix *string  `json:"keyPrefix,omitempty"`
-	Scopes    []string `json:"scopes,omitempty"`
+	ID        *string  `json:"id,omitzero"`
+	Name      *string  `json:"name,omitzero"`
+	KeyPrefix *string  `json:"keyPrefix,omitzero"`
+	Scopes    []string `json:"scopes,omitzero"`
 }
 
 type UpdateBroadcastRequest struct {
-	Name     *string `json:"name,omitempty"`
-	Audience *string `json:"audience,omitempty"`
+	Name     *string `json:"name,omitzero"`
+	Audience *string `json:"audience,omitzero"`
 	// SegmentID: Required when audience is segment
-	SegmentID *string `json:"segment_id,omitempty"`
+	SegmentID *string `json:"segment_id,omitzero"`
 	// AudienceMeta: Details of the audience, such as the segment_id
-	AudienceMeta map[string]any `json:"audience_meta,omitempty"`
+	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
 	// TemplateID: Not in Resend, and only on create (PATCH ignores it). Start from a template (id or alias): its current content, as the template editor shows it, is co
-	TemplateID  *string `json:"template_id,omitempty"`
-	From        *string `json:"from,omitempty"`
-	ReplyTo     *string `json:"reply_to,omitempty"`
-	Subject     *string `json:"subject,omitempty"`
-	PreviewText *string `json:"preview_text,omitempty"`
+	TemplateID  *string          `json:"template_id,omitzero"`
+	From        *string          `json:"from,omitzero"`
+	ReplyTo     Nullable[string] `json:"reply_to,omitzero"`
+	Subject     *string          `json:"subject,omitzero"`
+	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Markdown: Markdown body. Must include {{unsubscribe_url}} or {{{RESEND_UNSUBSCRIBE_URL}}} before sending.
-	Markdown    *string `json:"markdown,omitempty"`
-	HTML        *string `json:"html,omitempty"`
-	Text        *string `json:"text,omitempty"`
-	TrackOpens  *bool   `json:"track_opens,omitempty"`
-	TrackClicks *bool   `json:"track_clicks,omitempty"`
+	Markdown    *string          `json:"markdown,omitzero"`
+	HTML        Nullable[string] `json:"html,omitzero"`
+	Text        Nullable[string] `json:"text,omitzero"`
+	TrackOpens  *bool            `json:"track_opens,omitzero"`
+	TrackClicks *bool            `json:"track_clicks,omitzero"`
 }
 
 type UpdateContactPropertyParams struct {
@@ -1780,14 +1780,14 @@ type UpdateContactPropertyResponse struct {
 }
 
 type UpdateContactRequest struct {
-	FirstName    *string        `json:"firstName,omitempty"`
-	LastName     *string        `json:"lastName,omitempty"`
-	FirstName_   *string        `json:"first_name,omitempty"`
-	LastName_    *string        `json:"last_name,omitempty"`
-	Unsubscribed *bool          `json:"unsubscribed,omitempty"`
-	Properties   map[string]any `json:"properties,omitempty"`
+	FirstName    *string        `json:"firstName,omitzero"`
+	LastName     *string        `json:"lastName,omitzero"`
+	FirstName_   *string        `json:"first_name,omitzero"`
+	LastName_    *string        `json:"last_name,omitzero"`
+	Unsubscribed *bool          `json:"unsubscribed,omitzero"`
+	Properties   map[string]any `json:"properties,omitzero"`
 	// SegmentIDs: Replace this contact's manual segment assignments
-	SegmentIDs []string `json:"segment_ids,omitempty"`
+	SegmentIDs []string `json:"segment_ids,omitzero"`
 }
 
 type UpdateDomainReceivingParams struct {
@@ -1795,8 +1795,8 @@ type UpdateDomainReceivingParams struct {
 }
 
 type UpdateDomainReceivingResponse struct {
-	ID        *string          `json:"id,omitempty"`
-	Receiving *DomainReceiving `json:"receiving,omitempty"`
+	ID        *string          `json:"id,omitzero"`
+	Receiving *DomainReceiving `json:"receiving,omitzero"`
 }
 
 type UpdateEmailParams struct {
@@ -1811,43 +1811,43 @@ type UpdateEmailResponse struct {
 }
 
 type UpdateInboxDraftParams struct {
-	To      StringList `json:"to,omitempty"`
-	Cc      StringList `json:"cc,omitempty"`
-	Bcc     StringList `json:"bcc,omitempty"`
-	Subject *string    `json:"subject,omitempty"`
-	HTML    *string    `json:"html,omitempty"`
-	Text    *string    `json:"text,omitempty"`
+	To      StringList       `json:"to,omitzero"`
+	Cc      StringList       `json:"cc,omitzero"`
+	Bcc     StringList       `json:"bcc,omitzero"`
+	Subject Nullable[string] `json:"subject,omitzero"`
+	HTML    Nullable[string] `json:"html,omitzero"`
+	Text    Nullable[string] `json:"text,omitzero"`
 	// Revision: Only write if the draft is still at this revision. Not in Resend.
-	Revision *int64 `json:"revision,omitempty"`
+	Revision *int64 `json:"revision,omitzero"`
 }
 
 type UpdateInboxLabelParams struct {
-	Name  *string `json:"name,omitempty"`
-	Color *string `json:"color,omitempty"`
+	Name  *string `json:"name,omitzero"`
+	Color *string `json:"color,omitzero"`
 }
 
 type UpdateInboxLabelResponse struct {
-	Object *string `json:"object,omitempty"`
-	ID     *string `json:"id,omitempty"`
+	Object *string `json:"object,omitzero"`
+	ID     *string `json:"id,omitzero"`
 }
 
 type UpdateInboxParams struct {
-	Name     *string `json:"name,omitempty"`
-	FromName *string `json:"from_name,omitempty"`
+	Name     *string          `json:"name,omitzero"`
+	FromName Nullable[string] `json:"from_name,omitzero"`
 }
 
 type UpdateInboxResponse struct {
-	Object *string `json:"object,omitempty"`
-	ID     *string `json:"id,omitempty"`
+	Object *string `json:"object,omitzero"`
+	ID     *string `json:"id,omitzero"`
 }
 
 type UpdateInboxThreadParams struct {
-	Read   *bool   `json:"read,omitempty"`
-	Folder *string `json:"folder,omitempty"`
+	Read   *bool   `json:"read,omitzero"`
+	Folder *string `json:"folder,omitzero"`
 	// LabelID: Apply this label of the same inbox
-	LabelID *string `json:"label_id,omitempty"`
+	LabelID *string `json:"label_id,omitzero"`
 	// RemoveLabelID: Remove this label. Not in Resend.
-	RemoveLabelID *string `json:"remove_label_id,omitempty"`
+	RemoveLabelID *string `json:"remove_label_id,omitzero"`
 }
 
 type UpdateReceivedEmailParams struct {
@@ -1855,82 +1855,82 @@ type UpdateReceivedEmailParams struct {
 }
 
 type UpdateReceivedEmailResponse struct {
-	Object *string `json:"object,omitempty"`
-	ID     *string `json:"id,omitempty"`
-	ReadAt *string `json:"read_at,omitempty"`
+	Object *string          `json:"object,omitzero"`
+	ID     *string          `json:"id,omitzero"`
+	ReadAt Nullable[string] `json:"read_at,omitzero"`
 }
 
 type UpdateSegmentRequest struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	Color       *string `json:"color,omitempty"`
+	Name        *string          `json:"name,omitzero"`
+	Description Nullable[string] `json:"description,omitzero"`
+	Color       Nullable[string] `json:"color,omitzero"`
 }
 
 // UpdateSignupFormRequest: Only the fields sent change. Keys are snake_case, as in the form object. The older camelCase spelling of each key (buttonText, doubleOptIn, welcomeEma
 type UpdateSignupFormRequest struct {
-	Name             *string  `json:"name,omitempty"`
-	Fields           []string `json:"fields,omitempty"`
-	ButtonText       *string  `json:"button_text,omitempty"`
-	ButtonColor      *string  `json:"button_color,omitempty"`
-	SuccessMessage   *string  `json:"success_message,omitempty"`
-	DoubleOptIn      *bool    `json:"double_opt_in,omitempty"`
-	RedirectURL      *string  `json:"redirect_url,omitempty"`
-	CaptchaEnabled   *bool    `json:"captcha_enabled,omitempty"`
-	CaptchaProvider  *string  `json:"captcha_provider,omitempty"`
-	TurnstileSiteKey *string  `json:"turnstile_site_key,omitempty"`
+	Name             *string          `json:"name,omitzero"`
+	Fields           []string         `json:"fields,omitzero"`
+	ButtonText       *string          `json:"button_text,omitzero"`
+	ButtonColor      *string          `json:"button_color,omitzero"`
+	SuccessMessage   *string          `json:"success_message,omitzero"`
+	DoubleOptIn      *bool            `json:"double_opt_in,omitzero"`
+	RedirectURL      Nullable[string] `json:"redirect_url,omitzero"`
+	CaptchaEnabled   *bool            `json:"captcha_enabled,omitzero"`
+	CaptchaProvider  *string          `json:"captcha_provider,omitzero"`
+	TurnstileSiteKey Nullable[string] `json:"turnstile_site_key,omitzero"`
 	// TurnstileSecretKey: Write-only. Omit to keep the existing secret.
-	TurnstileSecretKey    *string `json:"turnstile_secret_key,omitempty"`
-	BlockDisposableEmails *bool   `json:"block_disposable_emails,omitempty"`
-	Active                *bool   `json:"active,omitempty"`
+	TurnstileSecretKey    Nullable[string] `json:"turnstile_secret_key,omitzero"`
+	BlockDisposableEmails *bool            `json:"block_disposable_emails,omitzero"`
+	Active                *bool            `json:"active,omitzero"`
 	// ConfirmationEmailFrom: Sender of the double opt-in confirmation email. The platform address is used when this is unset or its domain is not verified.
-	ConfirmationEmailFrom *string `json:"confirmation_email_from,omitempty"`
+	ConfirmationEmailFrom Nullable[string] `json:"confirmation_email_from,omitzero"`
 	// WelcomeEmailEnabled: Send a welcome email to each new contact from this form.
-	WelcomeEmailEnabled *bool `json:"welcome_email_enabled,omitempty"`
+	WelcomeEmailEnabled *bool `json:"welcome_email_enabled,omitzero"`
 	// WelcomeEmailFrom: Sender of the welcome email. Its domain must be verified, or the welcome email is skipped.
-	WelcomeEmailFrom    *string `json:"welcome_email_from,omitempty"`
-	WelcomeEmailSubject *string `json:"welcome_email_subject,omitempty"`
+	WelcomeEmailFrom    Nullable[string] `json:"welcome_email_from,omitzero"`
+	WelcomeEmailSubject Nullable[string] `json:"welcome_email_subject,omitzero"`
 	// WelcomeEmailMarkdown: Welcome email body as Markdown.
-	WelcomeEmailMarkdown *string `json:"welcome_email_markdown,omitempty"`
+	WelcomeEmailMarkdown Nullable[string] `json:"welcome_email_markdown,omitzero"`
 }
 
 type UpdateTeamMemberParams struct {
-	Role             *string `json:"role,omitempty"`
-	CanManageBilling *bool   `json:"can_manage_billing,omitempty"`
+	Role             *string `json:"role,omitzero"`
+	CanManageBilling *bool   `json:"can_manage_billing,omitzero"`
 }
 
 // UpdateTemplateRequest: Any field of CreateTemplateRequest. Only the fields sent change; variables, when sent, replace the whole list.
 type UpdateTemplateRequest struct {
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitzero"`
 	// Alias: A second handle, unique in the team, that works wherever the id does.
-	Alias *string `json:"alias,omitempty"`
+	Alias Nullable[string] `json:"alias,omitzero"`
 	// From: Default sender, e.g. "Acme <orders@acme.com>". A send can override it.
-	From *string `json:"from,omitempty"`
+	From Nullable[string] `json:"from,omitzero"`
 	// Subject: Default subject. Can use variables. A send can override it.
-	Subject *string `json:"subject,omitempty"`
+	Subject Nullable[string] `json:"subject,omitzero"`
 	// ReplyTo: Default Reply-To address or addresses. A send can override it.
-	ReplyTo StringList `json:"reply_to,omitempty"`
+	ReplyTo StringList `json:"reply_to,omitzero"`
 	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}.
-	HTML *string `json:"html,omitempty"`
+	HTML Nullable[string] `json:"html,omitzero"`
 	// Text: Plain-text body. When left out, the text part is generated from the HTML at send time. Exactly "" stops that, as in Resend; the email then carries an
-	Text *string `json:"text,omitempty"`
+	Text Nullable[string] `json:"text,omitzero"`
 	// Markdown: Not in Resend. A Markdown body, rendered into SMTPfast's email layout. Used when html is empty.
-	Markdown *string `json:"markdown,omitempty"`
+	Markdown Nullable[string] `json:"markdown,omitzero"`
 	// PreviewText: Not in Resend. The inbox preview line, put into the email as a hidden first line.
-	PreviewText *string `json:"preview_text,omitempty"`
+	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Category: Not in Resend. A label for grouping templates in the dashboard.
-	Category  *string            `json:"category,omitempty"`
-	Variables []TemplateVariable `json:"variables,omitempty"`
+	Category  Nullable[string]   `json:"category,omitzero"`
+	Variables []TemplateVariable `json:"variables,omitzero"`
 	// ExpectedUpdatedAt: Not in Resend. The updated_at you loaded. If the template changed since, the update is refused with 409 revision_conflict instead of overwriting the n
-	ExpectedUpdatedAt *string `json:"expected_updated_at,omitempty"`
+	ExpectedUpdatedAt *string `json:"expected_updated_at,omitzero"`
 }
 
 type UpdateWebhookRequest struct {
-	URL *string `json:"url,omitempty"`
+	URL *string `json:"url,omitzero"`
 	// Events: List of event types to subscribe to. Legacy unprefixed email aliases are accepted and normalized to Resend-style email.* event names.
-	Events []string `json:"events,omitempty"`
+	Events []string `json:"events,omitzero"`
 	// Active: Set to false to pause delivery without deleting the webhook
-	Active *bool   `json:"active,omitempty"`
-	Format *string `json:"format,omitempty"`
+	Active *bool   `json:"active,omitzero"`
+	Format *string `json:"format,omitzero"`
 }
 
 type Usage struct {
@@ -2027,22 +2027,22 @@ type UsageSegments struct {
 }
 
 type VerifyDomainResponse struct {
-	Domain            *string                     `json:"domain,omitempty"`
-	Status            *string                     `json:"status,omitempty"`
-	VerificationPhase *string                     `json:"verification_phase,omitempty"`
-	Checks            *VerifyDomainResponseChecks `json:"checks,omitempty"`
-	MailFromDomain    *string                     `json:"mail_from_domain,omitempty"`
-	SesConfigured     *bool                       `json:"ses_configured,omitempty"`
+	Domain            *string                     `json:"domain,omitzero"`
+	Status            *string                     `json:"status,omitzero"`
+	VerificationPhase *string                     `json:"verification_phase,omitzero"`
+	Checks            *VerifyDomainResponseChecks `json:"checks,omitzero"`
+	MailFromDomain    Nullable[string]            `json:"mail_from_domain,omitzero"`
+	SesConfigured     *bool                       `json:"ses_configured,omitzero"`
 	// DKIMCheckRestarted: True when the email provider had stopped checking DKIM and this request restarted the check.
-	DKIMCheckRestarted *bool   `json:"dkim_check_restarted,omitempty"`
-	Message            *string `json:"message,omitempty"`
+	DKIMCheckRestarted *bool   `json:"dkim_check_restarted,omitzero"`
+	Message            *string `json:"message,omitzero"`
 }
 
 type VerifyDomainResponseChecks struct {
-	DKIM     *string `json:"dkim,omitempty"`
-	SPF      *string `json:"spf,omitempty"`
-	DMARC    *string `json:"dmarc,omitempty"`
-	MailFrom *string `json:"mail_from,omitempty"`
+	DKIM     *string `json:"dkim,omitzero"`
+	SPF      *string `json:"spf,omitzero"`
+	DMARC    *string `json:"dmarc,omitzero"`
+	MailFrom *string `json:"mail_from,omitzero"`
 }
 
 // Webhook: List and read responses also carry createdAt and updatedAt in camelCase for older clients.
@@ -2051,55 +2051,55 @@ type Webhook struct {
 	URL    string   `json:"url"`
 	Events []string `json:"events"`
 	Active bool     `json:"active"`
-	Format *string  `json:"format,omitempty"`
+	Format *string  `json:"format,omitzero"`
 	// Secret: The signing secret. Returned once, in the create response.
-	Secret    *string `json:"secret,omitempty"`
+	Secret    *string `json:"secret,omitzero"`
 	CreatedAt string  `json:"created_at"`
-	UpdatedAt *string `json:"updated_at,omitempty"`
+	UpdatedAt *string `json:"updated_at,omitzero"`
 }
 
 type WebhookDelivery struct {
-	Object      *string `json:"object,omitempty"`
-	ID          *string `json:"id,omitempty"`
-	WebhookID   *string `json:"webhook_id,omitempty"`
-	Event       *string `json:"event,omitempty"`
-	Status      *string `json:"status,omitempty"`
-	Attempts    *int64  `json:"attempts,omitempty"`
-	MaxAttempts *int64  `json:"max_attempts,omitempty"`
-	StatusCode  *int64  `json:"status_code,omitempty"`
-	DurationMs  *int64  `json:"duration_ms,omitempty"`
-	Error       *string `json:"error,omitempty"`
+	Object      *string          `json:"object,omitzero"`
+	ID          *string          `json:"id,omitzero"`
+	WebhookID   *string          `json:"webhook_id,omitzero"`
+	Event       *string          `json:"event,omitzero"`
+	Status      *string          `json:"status,omitzero"`
+	Attempts    *int64           `json:"attempts,omitzero"`
+	MaxAttempts *int64           `json:"max_attempts,omitzero"`
+	StatusCode  Nullable[int64]  `json:"status_code,omitzero"`
+	DurationMs  Nullable[int64]  `json:"duration_ms,omitzero"`
+	Error       Nullable[string] `json:"error,omitzero"`
 	// Response: First 500 characters of the last response body
-	Response      *string                         `json:"response,omitempty"`
-	AttemptLog    []WebhookDeliveryAttemptLogItem `json:"attempt_log,omitempty"`
-	NextAttemptAt *string                         `json:"next_attempt_at,omitempty"`
-	DeliveredAt   *string                         `json:"delivered_at,omitempty"`
-	CreatedAt     *string                         `json:"created_at,omitempty"`
+	Response      Nullable[string]                `json:"response,omitzero"`
+	AttemptLog    []WebhookDeliveryAttemptLogItem `json:"attempt_log,omitzero"`
+	NextAttemptAt Nullable[string]                `json:"next_attempt_at,omitzero"`
+	DeliveredAt   Nullable[string]                `json:"delivered_at,omitzero"`
+	CreatedAt     *string                         `json:"created_at,omitzero"`
 }
 
 type WebhookDeliveryAttemptLogItem struct {
-	At         *string `json:"at,omitempty"`
-	StatusCode *int64  `json:"status_code,omitempty"`
-	DurationMs *int64  `json:"duration_ms,omitempty"`
-	Error      *string `json:"error,omitempty"`
+	At         *string          `json:"at,omitzero"`
+	StatusCode Nullable[int64]  `json:"status_code,omitzero"`
+	DurationMs *int64           `json:"duration_ms,omitzero"`
+	Error      Nullable[string] `json:"error,omitzero"`
 }
 
 type WebhookEvent struct {
-	Object        *string `json:"object,omitempty"`
-	ID            *string `json:"id,omitempty"`
-	Type          *string `json:"type,omitempty"`
-	CreatedAt     *string `json:"created_at,omitempty"`
-	Status        *string `json:"status,omitempty"`
-	NextAttemptAt *string `json:"next_attempt_at,omitempty"`
+	Object        *string          `json:"object,omitzero"`
+	ID            *string          `json:"id,omitzero"`
+	Type          *string          `json:"type,omitzero"`
+	CreatedAt     *string          `json:"created_at,omitzero"`
+	Status        *string          `json:"status,omitzero"`
+	NextAttemptAt Nullable[string] `json:"next_attempt_at,omitzero"`
 	// Payload: The body that was sent, parsed as JSON
-	Payload any `json:"payload,omitempty"`
+	Payload any `json:"payload,omitzero"`
 }
 
 type WebhookEventSummary struct {
-	ID        *string `json:"id,omitempty"`
-	Type      *string `json:"type,omitempty"`
-	CreatedAt *string `json:"created_at,omitempty"`
-	Status    *string `json:"status,omitempty"`
+	ID        *string `json:"id,omitzero"`
+	Type      *string `json:"type,omitzero"`
+	CreatedAt *string `json:"created_at,omitzero"`
+	Status    *string `json:"status,omitzero"`
 }
 
 // WebhookUpdated: The update response has no timestamps; fetch the webhook for those.

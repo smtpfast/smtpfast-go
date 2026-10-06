@@ -120,16 +120,25 @@ func (c *core) do(ctx context.Context, method, route string, pathParams map[stri
 		for k, v := range settings.headers {
 			req.Header[k] = v
 		}
+		// net/http replays a request that carries Idempotency-Key after a broken
+		// connection, so the header goes only on operations that dedupe on it.
+		req.Header.Del("Idempotency-Key")
 		if idempotent && key != "" {
 			req.Header.Set("Idempotency-Key", key)
 		}
 		res, err := c.http.Do(req)
+		var data []byte
+		if err == nil {
+			data, err = io.ReadAll(res.Body)
+			res.Body.Close()
+		}
+		cancel()
 		if err != nil {
-			cancel()
+			// No answer, or the body broke off: the same retry rules apply.
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			connErr := &ConnectionError{Err: err, Timeout: errors.Is(err, context.DeadlineExceeded)}
+			connErr := &ConnectionError{Err: err, Timeout: errors.Is(err, context.DeadlineExceeded) || errors.Is(attemptCtx.Err(), context.DeadlineExceeded)}
 			if !retryable || attempt >= maxRetries {
 				return connErr
 			}
@@ -137,12 +146,6 @@ func (c *core) do(ctx context.Context, method, route string, pathParams map[stri
 				return err
 			}
 			continue
-		}
-		data, readErr := io.ReadAll(res.Body)
-		res.Body.Close()
-		cancel()
-		if readErr != nil {
-			return &ConnectionError{Err: readErr}
 		}
 		if wait, ok := retryDelay(res, attempt, retryable); ok && attempt < maxRetries {
 			if err := sleep(ctx, wait); err != nil {
@@ -190,6 +193,9 @@ func parseRetryAfter(h string) (time.Duration, bool) {
 	if s, err := strconv.ParseFloat(h, 64); err == nil {
 		if math.IsNaN(s) || math.IsInf(s, 0) {
 			return 0, false
+		}
+		if s > maxRetryAfter.Seconds() {
+			return maxRetryAfter + time.Second, true // too long to wait; checked before converting, so it cannot overflow
 		}
 		return time.Duration(math.Max(s, 0) * float64(time.Second)), true
 	}
@@ -241,6 +247,8 @@ func setQuery(q url.Values, name string, value any) {
 
 func paginate[T any](ctx context.Context, c *core, route string, pathParams map[string]string, q url.Values, opts []RequestOption) iter.Seq2[T, error] {
 	return func(yield func(T, error) bool) {
+		// Each range over the iterator starts from the first page.
+		q := cloneValues(q)
 		for _, k := range paginationManaged {
 			q.Del(k)
 		}
@@ -277,6 +285,52 @@ func paginate[T any](ctx context.Context, c *core, route string, pathParams map[
 			q.Set("after", lastID)
 		}
 	}
+}
+
+func cloneValues(v url.Values) url.Values {
+	out := make(url.Values, len(v))
+	for k, vals := range v {
+		out[k] = append([]string(nil), vals...)
+	}
+	return out
+}
+
+// Nullable is a field that can be left out, set to null, or set to a value.
+// A request leaves it out by default; Null clears the field, Value sets it.
+type Nullable[T any] struct {
+	Value T
+	// Valid is false for null.
+	Valid bool
+	// Set is false when the field is left out (or was absent in a response).
+	Set bool
+}
+
+// Null returns a Nullable that sends null, which clears the field.
+func Null[T any]() Nullable[T] { return Nullable[T]{Set: true} }
+
+// Value returns a Nullable that sends v.
+func Value[T any](v T) Nullable[T] { return Nullable[T]{Value: v, Valid: true, Set: true} }
+
+// IsZero reports whether the field is left out, for the omitzero tag.
+func (n Nullable[T]) IsZero() bool { return !n.Set }
+
+// MarshalJSON writes null or the value.
+func (n Nullable[T]) MarshalJSON() ([]byte, error) {
+	if !n.Valid {
+		return []byte("null"), nil
+	}
+	return json.Marshal(n.Value)
+}
+
+// UnmarshalJSON reads null or a value.
+func (n *Nullable[T]) UnmarshalJSON(b []byte) error {
+	n.Set = true
+	if string(bytes.TrimSpace(b)) == "null" {
+		n.Valid = false
+		return nil
+	}
+	n.Valid = true
+	return json.Unmarshal(b, &n.Value)
 }
 
 // StringList is a list of strings that also reads a single JSON string, for

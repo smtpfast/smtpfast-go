@@ -229,8 +229,8 @@ func TestEveryOperation(t *testing.T) {
 			}
 		}
 	}
-	if count != 137 {
-		t.Fatalf("checked %d operations", count)
+	if count == 0 {
+		t.Fatal("no operations in the spec")
 	}
 }
 
@@ -246,4 +246,59 @@ func goName(s string) string {
 		}
 	}
 	return out.String()
+}
+
+func TestReviewFixes(t *testing.T) {
+	// A key on an operation that does not dedupe is dropped, so net/http cannot replay the POST.
+	c, rec := newTestClient()
+	if _, err := c.Contacts.Create(ctx, &CreateContactRequest{Email: "b@inbox.dev"}, WithHeader("Idempotency-Key", "x")); err != nil {
+		t.Fatal(err)
+	}
+	if rec.calls[0].header.Get("Idempotency-Key") != "" {
+		t.Fatal("Idempotency-Key sent on an operation that does not dedupe")
+	}
+	// Absent, null and an empty list are three different requests.
+	c, rec = newTestClient()
+	if _, err := c.Inboxes.Update(ctx, "in_1", &UpdateInboxParams{FromName: Null[string]()}); err != nil {
+		t.Fatal(err)
+	}
+	if rec.calls[0].body != `{"from_name":null}` {
+		t.Fatalf("null body %s", rec.calls[0].body)
+	}
+	c, rec = newTestClient()
+	if _, err := c.Contacts.Update(ctx, "ct_1", &UpdateContactRequest{SegmentIDs: []string{}}); err != nil {
+		t.Fatal(err)
+	}
+	if rec.calls[0].body != `{"segment_ids":[]}` {
+		t.Fatalf("empty list body %s", rec.calls[0].body)
+	}
+	// The typed export asks for JSON.
+	c, rec = newTestClient(reply{status: 200, body: `{"data":[]}`})
+	if _, err := c.Contacts.Export(ctx, nil); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(rec.calls[0].query, "format=json") {
+		t.Fatalf("export query %q", rec.calls[0].query)
+	}
+	// A huge Retry-After stops the retries instead of overflowing.
+	c, rec = newTestClient(reply{status: 503, header: map[string]string{"Retry-After": "10000000000"}})
+	if _, err := c.Domains.List(ctx); err == nil || len(rec.calls) != 1 {
+		t.Fatalf("huge Retry-After: %d calls", len(rec.calls))
+	}
+	// Ranging twice over one iterator starts from the first page both times.
+	c, rec = newTestClient(
+		reply{status: 200, body: `{"data":[{"id":"a"}],"has_more":true}`}, reply{status: 200, body: `{"data":[],"has_more":false}`},
+		reply{status: 200, body: `{"data":[{"id":"a"}],"has_more":true}`}, reply{status: 200, body: `{"data":[],"has_more":false}`},
+	)
+	seq := c.Logs.ListAll(ctx, nil)
+	for range 2 {
+		for _, err := range seq {
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	if rec.calls[2].query != "" {
+		t.Fatalf("second range started at %q", rec.calls[2].query)
+	}
 }

@@ -128,9 +128,14 @@ def define(name, schema):
         t, nullable = gotype(prop, name + go_name(key))
         optional = key not in required
         scalar = not (t.startswith("[]") or t.startswith("map[") or t in ("any", "StringList"))
-        if scalar and (optional or nullable):
+        if scalar and optional and nullable:
+            # Three states: absent, null (clears the field), or a value.
+            t = f"Nullable[{t}]"
+        elif scalar and (optional or nullable):
             t = "*" + t
-        tag = f'`json:"{key}{",omitempty" if optional else ""}"`'
+        # omitzero, not omitempty: an empty list that is set is still sent, so a
+        # PATCH can clear a list.
+        tag = f'`json:"{key}{",omitzero" if optional else ""}"`'
         doc = (deref(prop).get("description") or "").splitlines()
         if doc:
             lines.append(f"\t// {field}: {doc[0][:150]}")
@@ -222,6 +227,10 @@ def emit(node, prefix):
                 else:
                     lines.append(f'\t\tif query.{f} != nil {{\n\t\t\tsetQuery(q, "{p["name"]}", *query.{f})\n\t\t}}')
             lines.append("\t}")
+            fmt_param = next((p for p in op["query_params"] if p["name"] == "format"), None)
+            if fmt_param and "json" in (fmt_param.get("schema") or {}).get("enum", []) and (fmt_param.get("schema") or {}).get("default") != "json":
+                # The typed method decodes JSON, so it asks for JSON unless told otherwise.
+                lines.append('\tif q.Get("format") == "" {\n\t\tq.Set("format", "json")\n\t}')
             q = "q"
         body = "params" if op["body"] else "nil"
         result = op["result"]
