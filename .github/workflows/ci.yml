@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ["1.23", "stable"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ matrix.go }}
+      # The generated code must be exactly what the spec in the repo produces.
+      - name: Generated code is up to date
+        run: python3 scripts/generate.py && git diff --exit-code
+      - run: go vet ./...
+      - run: go test ./...
+
+  # Read-only calls to the real API; every answer must decode. Needs a key
+  # with email:read and domain:read in the SMTPFAST_API_KEY secret.
+  live:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+      - run: go test -run TestLive -v ./...
+        env:
+          SMTPFAST_API_KEY: ${{ secrets.SMTPFAST_API_KEY }}
