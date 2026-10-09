@@ -1780,9 +1780,9 @@ func newDomainsService(c *core) *DomainsService {
 }
 
 // List: List domains (GET /v1/domains).
-func (s *DomainsService) List(ctx context.Context, opts ...RequestOption) ([]DomainListItem, error) {
-	var out []DomainListItem
-	err := s.core.do(ctx, "GET", "/v1/domains", map[string]string{}, nil, nil, false, &out, opts)
+func (s *DomainsService) List(ctx context.Context, opts ...RequestOption) (*ListDomainsResponse, error) {
+	out := new(ListDomainsResponse)
+	err := s.core.do(ctx, "GET", "/v1/domains", map[string]string{}, nil, nil, false, out, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -1897,9 +1897,9 @@ func newAPIKeysService(c *core) *APIKeysService {
 }
 
 // List: List API keys (GET /v1/api-keys).
-func (s *APIKeysService) List(ctx context.Context, opts ...RequestOption) ([]APIKey, error) {
-	var out []APIKey
-	err := s.core.do(ctx, "GET", "/v1/api-keys", map[string]string{}, nil, nil, false, &out, opts)
+func (s *APIKeysService) List(ctx context.Context, opts ...RequestOption) (*ListAPIKeysResponse, error) {
+	out := new(ListAPIKeysResponse)
+	err := s.core.do(ctx, "GET", "/v1/api-keys", map[string]string{}, nil, nil, false, out, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -1952,9 +1952,9 @@ func newWebhooksService(c *core) *WebhooksService {
 }
 
 // List: List webhooks (GET /v1/webhooks).
-func (s *WebhooksService) List(ctx context.Context, opts ...RequestOption) ([]Webhook, error) {
-	var out []Webhook
-	err := s.core.do(ctx, "GET", "/v1/webhooks", map[string]string{}, nil, nil, false, &out, opts)
+func (s *WebhooksService) List(ctx context.Context, opts ...RequestOption) (*ListWebhooksResponse, error) {
+	out := new(ListWebhooksResponse)
+	err := s.core.do(ctx, "GET", "/v1/webhooks", map[string]string{}, nil, nil, false, out, opts)
 	if err != nil {
 		return nil, err
 	}
