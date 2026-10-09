@@ -438,7 +438,7 @@
       "post": {
         "operationId": "sendEmailBatch",
         "summary": "Send a batch of emails",
-        "description": "Queue up to 100 emails in a single request. The body is a JSON array of email objects, each using the same shape as the single-send endpoint. Validation runs on every item before any are queued \u2014 a malformed item rejects the whole batch with 400. Suppressed recipients (to, cc and bcc) are dropped per row; a row left with no deliverable To recipient is recorded with status \"failed\". The batch is accepted whole or not at all: every email is recorded and queued, or none is, so there is no partial success to reconcile. A 4xx means nothing was queued. After a 5xx or a lost response, retry with the same Idempotency-Key: you get the first answer if the batch was accepted, or a fresh attempt if it was not.",
+        "description": "Queue up to 100 emails in a single request. The body is a JSON array of email objects, each using the same shape as the single-send endpoint. Validation runs on every item before any are queued — a malformed item rejects the whole batch with 400. Suppressed recipients (to, cc and bcc) are dropped per row; a row left with no deliverable To recipient is recorded with status \"failed\". The batch is accepted whole or not at all: every email is recorded and queued, or none is, so there is no partial success to reconcile. A 4xx means nothing was queued. After a 5xx or a lost response, retry with the same Idempotency-Key: you get the first answer if the batch was accepted, or a fresh attempt if it was not.",
         "tags": [
           "Emails"
         ],
@@ -2022,7 +2022,7 @@
             }
           },
           "402": {
-            "description": "Error",
+            "description": "Plan limit reached - upgrade the plan to add more",
             "content": {
               "application/json": {
                 "schema": {
@@ -4095,6 +4095,10 @@
                       "type": "string",
                       "example": "list"
                     },
+                    "has_more": {
+                      "type": "boolean",
+                      "example": false
+                    },
                     "data": {
                       "type": "array",
                       "items": {
@@ -5570,9 +5574,19 @@
                 "schema": {
                   "type": "object",
                   "required": [
+                    "object",
+                    "has_more",
                     "data"
                   ],
                   "properties": {
+                    "object": {
+                      "type": "string",
+                      "example": "list"
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "example": false
+                    },
                     "data": {
                       "type": "array",
                       "items": {
@@ -5992,6 +6006,16 @@
               }
             }
           },
+          "402": {
+            "description": "Plan limit reached - upgrade the plan to add more",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "403": {
             "description": "Forbidden - domain not verified or insufficient permissions",
             "content": {
@@ -6368,6 +6392,16 @@
           },
           "401": {
             "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Plan limit reached - upgrade the plan to add more",
             "content": {
               "application/json": {
                 "schema": {
@@ -10813,7 +10847,7 @@
             }
           },
           "402": {
-            "description": "Error",
+            "description": "Plan limit reached - upgrade the plan to add more",
             "content": {
               "application/json": {
                 "schema": {
@@ -10881,9 +10915,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DomainListItem"
+                  "type": "object",
+                  "required": [
+                    "object",
+                    "has_more",
+                    "data"
+                  ],
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "example": "list"
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DomainListItem"
+                      }
+                    }
                   }
                 }
               }
@@ -11175,7 +11227,7 @@
             }
           },
           "402": {
-            "description": "Error",
+            "description": "Plan limit reached - upgrade the plan to add more",
             "content": {
               "application/json": {
                 "schema": {
@@ -11446,7 +11498,7 @@
             }
           },
           "402": {
-            "description": "Error",
+            "description": "Plan limit reached - upgrade the plan to add more",
             "content": {
               "application/json": {
                 "schema": {
@@ -11743,9 +11795,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ApiKey"
+                  "type": "object",
+                  "required": [
+                    "object",
+                    "has_more",
+                    "data"
+                  ],
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "example": "list"
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ApiKey"
+                      }
+                    }
                   }
                 }
               }
@@ -12055,6 +12125,26 @@
               }
             }
           },
+          "402": {
+            "description": "Plan limit reached - upgrade the plan to add more",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
             "content": {
@@ -12094,9 +12184,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Webhook"
+                  "type": "object",
+                  "required": [
+                    "object",
+                    "has_more",
+                    "data"
+                  ],
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "example": "list"
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Webhook"
+                      }
+                    }
                   }
                 }
               }
@@ -16145,12 +16253,17 @@
       "EmailList": {
         "type": "object",
         "required": [
+          "object",
           "data",
           "limit",
           "total",
           "has_more"
         ],
         "properties": {
+          "object": {
+            "type": "string",
+            "example": "list"
+          },
           "data": {
             "type": "array",
             "items": {
@@ -16665,6 +16778,7 @@
         "type": "object",
         "required": [
           "object",
+          "has_more",
           "data",
           "total",
           "segment_limit"
@@ -16673,6 +16787,11 @@
           "object": {
             "type": "string",
             "example": "list"
+          },
+          "has_more": {
+            "type": "boolean",
+            "example": false,
+            "description": "Always false: every segment is in one page"
           },
           "data": {
             "type": "array",
@@ -18101,6 +18220,8 @@
       "PendingSignupList": {
         "type": "object",
         "required": [
+          "object",
+          "has_more",
           "data",
           "total",
           "undeliverable_total",
@@ -18110,6 +18231,14 @@
           "per_page"
         ],
         "properties": {
+          "object": {
+            "type": "string",
+            "example": "list"
+          },
+          "has_more": {
+            "type": "boolean",
+            "example": false
+          },
           "data": {
             "type": "array",
             "items": {
@@ -18492,18 +18621,18 @@
       },
       "DomainListItem": {
         "type": "object",
-        "description": "A domain as the list returns it. The field names are camelCase here, unlike the rest of the API.",
+        "description": "A domain as the list returns it. GET /v1/domains/{id} has the DNS records and verification detail.",
         "required": [
           "id",
           "domain",
           "status",
-          "dkimStatus",
-          "spfStatus",
-          "dmarcStatus",
-          "verifiedAt",
-          "createdAt",
-          "receivingEnabled",
-          "receivingStatus"
+          "dkim_status",
+          "spf_status",
+          "dmarc_status",
+          "verified_at",
+          "created_at",
+          "receiving_enabled",
+          "receiving_status"
         ],
         "properties": {
           "id": {
@@ -18519,33 +18648,33 @@
             "example": "verified",
             "description": "pending, verifying, verified or failed"
           },
-          "dkimStatus": {
+          "dkim_status": {
             "type": "string",
             "example": "verified"
           },
-          "spfStatus": {
+          "spf_status": {
             "type": "string",
             "example": "verified"
           },
-          "dmarcStatus": {
+          "dmarc_status": {
             "type": "string",
             "example": "pending"
           },
-          "verifiedAt": {
+          "verified_at": {
             "type": [
               "string",
               "null"
             ],
             "format": "date-time"
           },
-          "createdAt": {
+          "created_at": {
             "type": "string",
             "format": "date-time"
           },
-          "receivingEnabled": {
+          "receiving_enabled": {
             "type": "boolean"
           },
-          "receivingStatus": {
+          "receiving_status": {
             "type": "string",
             "example": "disabled",
             "description": "disabled, pending, active or failed"

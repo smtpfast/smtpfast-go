@@ -35,8 +35,8 @@ func TestLive(t *testing.T) {
 	}
 	domains, err := c.Domains.List(ctx)
 	check("domains.list", err)
-	if err == nil && len(domains) > 0 {
-		_, err = c.Domains.Get(ctx, domains[0].ID)
+	if err == nil && len(domains.Data) > 0 {
+		_, err = c.Domains.Get(ctx, domains.Data[0].ID)
 		check("domains.get", err)
 	}
 	_, err = c.Emails.GetMetrics(ctx, nil)

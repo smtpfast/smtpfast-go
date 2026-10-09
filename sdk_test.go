@@ -110,7 +110,7 @@ func TestErrors(t *testing.T) {
 
 func TestRetries(t *testing.T) {
 	noWait := map[string]string{"Retry-After": "0"}
-	c, rec := newTestClient(reply{status: 503, body: `{}`, header: noWait}, reply{status: 200, body: `[]`})
+	c, rec := newTestClient(reply{status: 503, body: `{}`, header: noWait}, reply{status: 200, body: `{"object":"list","has_more":false,"data":[]}`})
 	if _, err := c.Domains.List(ctx); err != nil || len(rec.calls) != 2 {
 		t.Fatalf("GET after 503: %v, %d calls", err, len(rec.calls))
 	}
