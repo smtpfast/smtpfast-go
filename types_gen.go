@@ -517,20 +517,20 @@ type Domain struct {
 	DNSRecords      []DNSRecord `json:"dns_records"`
 }
 
-// DomainListItem: A domain as the list returns it. The field names are camelCase here, unlike the rest of the API.
+// DomainListItem: A domain as the list returns it. GET /v1/domains/{id} has the DNS records and verification detail.
 type DomainListItem struct {
 	ID     string `json:"id"`
 	Domain string `json:"domain"`
 	// Status: pending, verifying, verified or failed
 	Status           string  `json:"status"`
-	DKIMStatus       string  `json:"dkimStatus"`
-	SPFStatus        string  `json:"spfStatus"`
-	DMARCStatus      string  `json:"dmarcStatus"`
-	VerifiedAt       *string `json:"verifiedAt"`
-	CreatedAt        string  `json:"createdAt"`
-	ReceivingEnabled bool    `json:"receivingEnabled"`
+	DKIMStatus       string  `json:"dkim_status"`
+	SPFStatus        string  `json:"spf_status"`
+	DMARCStatus      string  `json:"dmarc_status"`
+	VerifiedAt       *string `json:"verified_at"`
+	CreatedAt        string  `json:"created_at"`
+	ReceivingEnabled bool    `json:"receiving_enabled"`
 	// ReceivingStatus: disabled, pending, active or failed
-	ReceivingStatus string `json:"receivingStatus"`
+	ReceivingStatus string `json:"receiving_status"`
 }
 
 type DomainReceiving struct {
@@ -571,7 +571,8 @@ type Email struct {
 }
 
 type EmailList struct {
-	Data []EmailSummary `json:"data"`
+	Object string         `json:"object"`
+	Data   []EmailSummary `json:"data"`
 	// Page: Absent when paging with after or before
 	Page  *int64 `json:"page,omitzero"`
 	Limit int64  `json:"limit"`
@@ -945,6 +946,12 @@ type InboxThreadListItem struct {
 	Snippet Nullable[string] `json:"snippet,omitzero"`
 }
 
+type ListAPIKeysResponse struct {
+	Object  string   `json:"object"`
+	HasMore bool     `json:"has_more"`
+	Data    []APIKey `json:"data"`
+}
+
 type ListBroadcastClickedLinksResponse struct {
 	BroadcastID string                                       `json:"broadcast_id"`
 	Links       []ListBroadcastClickedLinksResponseLinksItem `json:"links"`
@@ -979,7 +986,9 @@ type ListClickedLinksQuery struct {
 }
 
 type ListContactPropertiesResponse struct {
-	Data []ContactProperty `json:"data"`
+	Object  string            `json:"object"`
+	HasMore bool              `json:"has_more"`
+	Data    []ContactProperty `json:"data"`
 }
 
 type ListContactsQuery struct {
@@ -988,6 +997,12 @@ type ListContactsQuery struct {
 	Disposable *bool   `json:"disposable,omitzero"`
 	SegmentID  *string `json:"segment_id,omitzero"`
 	Limit      *int64  `json:"limit,omitzero"`
+}
+
+type ListDomainsResponse struct {
+	Object  string           `json:"object"`
+	HasMore bool             `json:"has_more"`
+	Data    []DomainListItem `json:"data"`
 }
 
 type ListEmailsQuery struct {
@@ -1012,8 +1027,9 @@ type ListInboxDraftsResponse struct {
 }
 
 type ListInboxLabelsResponse struct {
-	Object *string      `json:"object,omitzero"`
-	Data   []InboxLabel `json:"data,omitzero"`
+	Object  *string      `json:"object,omitzero"`
+	HasMore *bool        `json:"has_more,omitzero"`
+	Data    []InboxLabel `json:"data,omitzero"`
 }
 
 type ListInboxThreadEmailsQuery struct {
@@ -1173,6 +1189,12 @@ type ListWebhookEventsResponse struct {
 	Data    []WebhookEventSummary `json:"data,omitzero"`
 }
 
+type ListWebhooksResponse struct {
+	Object  string    `json:"object"`
+	HasMore bool      `json:"has_more"`
+	Data    []Webhook `json:"data"`
+}
+
 type LogEvent struct {
 	Object    *string            `json:"object,omitzero"`
 	ID        *string            `json:"id,omitzero"`
@@ -1226,8 +1248,10 @@ type PendingSignupConfirmationEmail struct {
 }
 
 type PendingSignupList struct {
-	Data  []PendingSignup `json:"data"`
-	Total int64           `json:"total"`
+	Object  string          `json:"object"`
+	HasMore bool            `json:"has_more"`
+	Data    []PendingSignup `json:"data"`
+	Total   int64           `json:"total"`
 	// UndeliverableTotal: How many of the matching signups have an undeliverable confirmation email. Approve all leaves these out.
 	UndeliverableTotal int64 `json:"undeliverable_total"`
 	// TorTotal: How many of the matching signups were submitted through Tor. Approve all leaves these out.
@@ -1405,7 +1429,9 @@ type Segment struct {
 }
 
 type SegmentList struct {
-	Object       string           `json:"object"`
+	Object string `json:"object"`
+	// HasMore: Always false: every segment is in one page
+	HasMore      bool             `json:"has_more"`
 	Data         []SegmentSummary `json:"data"`
 	Total        int64            `json:"total"`
 	SegmentLimit int64            `json:"segment_limit"`
