@@ -438,7 +438,7 @@
       "post": {
         "operationId": "sendEmailBatch",
         "summary": "Send a batch of emails",
-        "description": "Queue up to 100 emails in a single request. The body is a JSON array of email objects, each using the same shape as the single-send endpoint. Validation runs on every item before any are queued — a malformed item rejects the whole batch with 400. Suppressed recipients (to, cc and bcc) are dropped per row; a row left with no deliverable To recipient is recorded with status \"failed\". The batch is accepted whole or not at all: every email is recorded and queued, or none is, so there is no partial success to reconcile. A 4xx means nothing was queued. After a 5xx or a lost response, retry with the same Idempotency-Key: you get the first answer if the batch was accepted, or a fresh attempt if it was not.",
+        "description": "Queue up to 100 emails in a single request. The body is a JSON array of email objects, each using the same shape as the single-send endpoint. Validation runs on every item before any are queued \u2014 a malformed item rejects the whole batch with 400. Suppressed recipients (to, cc and bcc) are dropped per row; a row left with no deliverable To recipient is recorded with status \"failed\". The batch is accepted whole or not at all: every email is recorded and queued, or none is, so there is no partial success to reconcile. A 4xx means nothing was queued. After a 5xx or a lost response, retry with the same Idempotency-Key: you get the first answer if the batch was accepted, or a fresh attempt if it was not.",
         "tags": [
           "Emails"
         ],
