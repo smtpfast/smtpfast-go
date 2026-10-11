@@ -123,7 +123,7 @@ func TestRetries(t *testing.T) {
 		t.Fatalf("keys %q %q", k1, k2)
 	}
 	c, rec = newTestClient(reply{status: 500, body: `{}`, header: noWait})
-	if _, err := c.Contacts.Create(ctx, &CreateContactRequest{Email: "b@inbox.dev"}, WithHeader("Idempotency-Key", "x")); err == nil || len(rec.calls) != 1 {
+	if _, err := c.Contacts.Create(ctx, &CreateContactParams{Email: String("b@inbox.dev")}, WithHeader("Idempotency-Key", "x")); err == nil || len(rec.calls) != 1 {
 		t.Fatalf("POST without dedupe was retried: %d calls", len(rec.calls))
 	}
 	c, rec = newTestClient(reply{status: 429, body: `{}`})
@@ -251,11 +251,11 @@ func goName(s string) string {
 func TestReviewFixes(t *testing.T) {
 	// A key on an operation that does not dedupe is dropped, so net/http cannot replay the POST.
 	c, rec := newTestClient()
-	if _, err := c.Contacts.Create(ctx, &CreateContactRequest{Email: "b@inbox.dev"}, WithHeader("Idempotency-Key", "x")); err != nil {
+	if _, err := c.Contacts.Create(ctx, &CreateContactParams{Email: String("b@inbox.dev")}, WithHeader("Idempotency-Key", "x")); err != nil {
 		t.Fatal(err)
 	}
 	c, rec2 := newTestClient()
-	if _, err := c.Contacts.Create(ctx, &CreateContactRequest{Email: "b@inbox.dev"}, WithHeader("X-Idempotency-Key", "x")); err != nil {
+	if _, err := c.Contacts.Create(ctx, &CreateContactParams{Email: String("b@inbox.dev")}, WithHeader("X-Idempotency-Key", "x")); err != nil {
 		t.Fatal(err)
 	}
 	if rec2.calls[0].header.Get("X-Idempotency-Key") != "" {

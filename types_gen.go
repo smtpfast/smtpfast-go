@@ -531,6 +531,21 @@ type CreateContactBatchRequest struct {
 	SegmentIDs []string `json:"segment_ids,omitzero"`
 }
 
+type CreateContactParams struct {
+	// Email: The contact email address
+	Email      *string `json:"email,omitzero"`
+	FirstName  *string `json:"firstName,omitzero"`
+	LastName   *string `json:"lastName,omitzero"`
+	FirstName_ *string `json:"first_name,omitzero"`
+	LastName_  *string `json:"last_name,omitzero"`
+	// Unsubscribed: Global broadcast subscription status
+	Unsubscribed *bool          `json:"unsubscribed,omitzero"`
+	Properties   map[string]any `json:"properties,omitzero"`
+	// SegmentIDs: Manual segment IDs to assign this contact to
+	SegmentIDs []string               `json:"segment_ids,omitzero"`
+	Contacts   []CreateContactRequest `json:"contacts,omitzero"`
+}
+
 type CreateContactPropertyParams struct {
 	Key  string `json:"key"`
 	Type string `json:"type"`
@@ -554,6 +569,13 @@ type CreateContactRequest struct {
 	Properties   map[string]any `json:"properties,omitzero"`
 	// SegmentIDs: Manual segment IDs to assign this contact to
 	SegmentIDs []string `json:"segment_ids,omitzero"`
+}
+
+type CreateContactResponse struct {
+	Object  string           `json:"object"`
+	ID      *string          `json:"id,omitzero"`
+	HasMore *bool            `json:"has_more,omitzero"`
+	Data    []ContactSummary `json:"data,omitzero"`
 }
 
 type CreateInboxDraftParams struct {
