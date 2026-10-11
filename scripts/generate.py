@@ -57,6 +57,20 @@ def merge_all_of(schema):
     return merged
 
 
+def object_schema(schema):
+    schema = deref(schema)
+    return merge_all_of(schema) if "allOf" in schema else schema
+
+
+def merge_one_of(members, description):
+    merged = {"type": "object", "properties": {}, "description": description}
+    for member in members:
+        for key, prop in member["properties"].items():
+            merged["properties"].setdefault(key, prop)
+    merged["required"] = [k for k in members[0].get("required", []) if all(k in m.get("required", []) for m in members)]
+    return merged
+
+
 def gotype(schema, hint):
     """The Go type for a schema, and whether it can be null."""
     if schema is None or schema is True or schema == {}:
@@ -78,6 +92,11 @@ def gotype(schema, hint):
             kinds = sorted({json.dumps(deref(m).get("type")) for m in members})
             if kinds == ['"array"', '"string"']:
                 return "StringList", nullable
+            if all(object_schema(m).get("properties") for m in members):
+                # One of several objects (one contact, or a batch): one struct
+                # with every member's fields; required only when all require it.
+                define(hint, merge_one_of([object_schema(m) for m in members], schema.get("description")))
+                return hint, nullable
             return "any", nullable
     if "allOf" in schema:
         if len(schema["allOf"]) == 1 and not schema.get("properties"):
