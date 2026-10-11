@@ -29,6 +29,7 @@ type Service struct {
 	APIKeys           *APIKeysService
 	Webhooks          *WebhooksService
 	Forms             *FormsService
+	LinkDomains       *LinkDomainsService
 	Analytics         *AnalyticsService
 }
 
@@ -50,6 +51,7 @@ func newService(c *core) *Service {
 		APIKeys:           newAPIKeysService(c),
 		Webhooks:          newWebhooksService(c),
 		Forms:             newFormsService(c),
+		LinkDomains:       newLinkDomainsService(c),
 		Analytics:         newAnalyticsService(c),
 	}
 }
@@ -2327,6 +2329,67 @@ func (s *FormsPendingService) Remove(ctx context.Context, id string, pendingID s
 func (s *FormsPendingService) Approve(ctx context.Context, id string, pendingID string, opts ...RequestOption) (*ApprovePendingSignupResponse, error) {
 	out := new(ApprovePendingSignupResponse)
 	err := s.core.do(ctx, "POST", "/v1/forms/{id}/pending/{pendingId}/approve", map[string]string{"id": id, "pendingId": pendingID}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// LinkDomainsService groups the linkDomains operations.
+type LinkDomainsService struct {
+	core *core
+}
+
+func newLinkDomainsService(c *core) *LinkDomainsService {
+	return &LinkDomainsService{
+		core: c,
+	}
+}
+
+// List: List link domains (GET /v1/link-domains).
+func (s *LinkDomainsService) List(ctx context.Context, opts ...RequestOption) (*LinkDomainList, error) {
+	out := new(LinkDomainList)
+	err := s.core.do(ctx, "GET", "/v1/link-domains", map[string]string{}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Create: Add a link domain (POST /v1/link-domains).
+func (s *LinkDomainsService) Create(ctx context.Context, params *CreateLinkDomainRequest, opts ...RequestOption) (*LinkDomain, error) {
+	out := new(LinkDomain)
+	err := s.core.do(ctx, "POST", "/v1/link-domains", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Get: Get a link domain (GET /v1/link-domains/{id}).
+func (s *LinkDomainsService) Get(ctx context.Context, id string, opts ...RequestOption) (*LinkDomain, error) {
+	out := new(LinkDomain)
+	err := s.core.do(ctx, "GET", "/v1/link-domains/{id}", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Delete: Delete a link domain (DELETE /v1/link-domains/{id}).
+func (s *LinkDomainsService) Delete(ctx context.Context, id string, opts ...RequestOption) (*LinkDomainDeleted, error) {
+	out := new(LinkDomainDeleted)
+	err := s.core.do(ctx, "DELETE", "/v1/link-domains/{id}", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Refresh: Refresh a link domain's status (POST /v1/link-domains/{id}/refresh).
+func (s *LinkDomainsService) Refresh(ctx context.Context, id string, opts ...RequestOption) (*LinkDomain, error) {
+	out := new(LinkDomain)
+	err := s.core.do(ctx, "POST", "/v1/link-domains/{id}/refresh", map[string]string{"id": id}, nil, nil, false, out, opts)
 	if err != nil {
 		return nil, err
 	}
