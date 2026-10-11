@@ -1046,9 +1046,9 @@ func (s *ContactsService) List(ctx context.Context, query *ListContactsQuery, op
 }
 
 // Create: Create a contact (POST /v1/contacts).
-func (s *ContactsService) Create(ctx context.Context, params any, opts ...RequestOption) (any, error) {
-	var out any
-	err := s.core.do(ctx, "POST", "/v1/contacts", map[string]string{}, nil, params, false, &out, opts)
+func (s *ContactsService) Create(ctx context.Context, params *CreateContactParams, opts ...RequestOption) (*CreateContactResponse, error) {
+	out := new(CreateContactResponse)
+	err := s.core.do(ctx, "POST", "/v1/contacts", map[string]string{}, nil, params, false, out, opts)
 	if err != nil {
 		return nil, err
 	}

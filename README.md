@@ -12,16 +12,19 @@ go get github.com/smtpfast/smtpfast-go
 client := smtpfast.NewClient() // reads SMTPFAST_API_KEY
 
 email, err := client.Emails.Send(ctx, &smtpfast.SendEmailRequest{
-	From:    smtpfast.String("Acme <hello@yourdomain.com>"),
-	To:      smtpfast.StringList{"customer@example.org"},
-	Subject: smtpfast.String("Your receipt"),
-	HTML:    smtpfast.String("<p>Thanks for your order.</p>"),
+	From:     smtpfast.String("Acme <hello@yourdomain.com>"),
+	To:       smtpfast.StringList{"customer@example.org"},
+	Subject:  smtpfast.String("Your receipt"),
+	HTML:     smtpfast.String("<p>Thanks for your order.</p>"),
+	Category: smtpfast.String("transactional"),
 })
 if err != nil {
 	return err
 }
 fmt.Println(email.ID)
 ```
+
+Email is marketing unless you set `category` to `transactional`. Marketing email gets a one-click unsubscribe header and is not sent to people who unsubscribed. Set `transactional` on receipts, password resets and account alerts so a marketing opt-out does not block them.
 
 Every API operation is a method, named after its path: `client.Domains.Verify(ctx, id)`, `client.Contacts.Segments.Add(ctx, contactID, segmentID)`, `client.Inboxes.Threads.Emails.Reply(ctx, inboxID, threadID, emailID, params)`. Path parameters come first, then the request body, then the query struct, then options. Optional fields are pointers; `smtpfast.String`, `smtpfast.Int` and `smtpfast.Bool` make them. A field that is optional and can be null is a `smtpfast.Nullable[T]`: leave it out, set `smtpfast.Value(x)`, or send `smtpfast.Null[T]()` to clear it. An empty list that you set is sent, so it clears the list.
 
