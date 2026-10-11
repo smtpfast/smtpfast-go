@@ -223,8 +223,8 @@ func (s *EmailsService) ListAll(ctx context.Context, query *ListEmailsQuery, opt
 }
 
 // Send: Send an email (POST /v1/emails).
-func (s *EmailsService) Send(ctx context.Context, params *SendEmailRequest, opts ...RequestOption) (*Email, error) {
-	out := new(Email)
+func (s *EmailsService) Send(ctx context.Context, params *SendEmailRequest, opts ...RequestOption) (*SendEmailResponse, error) {
+	out := new(SendEmailResponse)
 	err := s.core.do(ctx, "POST", "/v1/emails", map[string]string{}, nil, params, true, out, opts)
 	if err != nil {
 		return nil, err
@@ -1033,6 +1033,9 @@ func (s *ContactsService) List(ctx context.Context, query *ListContactsQuery, op
 		if query.Limit != nil {
 			setQuery(q, "limit", *query.Limit)
 		}
+		if query.Page != nil {
+			setQuery(q, "page", *query.Page)
+		}
 	}
 	out := new(ContactList)
 	err := s.core.do(ctx, "GET", "/v1/contacts", map[string]string{}, q, nil, false, out, opts)
@@ -1043,9 +1046,9 @@ func (s *ContactsService) List(ctx context.Context, query *ListContactsQuery, op
 }
 
 // Create: Create a contact (POST /v1/contacts).
-func (s *ContactsService) Create(ctx context.Context, params *CreateContactRequest, opts ...RequestOption) (*ContactCreated, error) {
-	out := new(ContactCreated)
-	err := s.core.do(ctx, "POST", "/v1/contacts", map[string]string{}, nil, params, false, out, opts)
+func (s *ContactsService) Create(ctx context.Context, params any, opts ...RequestOption) (any, error) {
+	var out any
+	err := s.core.do(ctx, "POST", "/v1/contacts", map[string]string{}, nil, params, false, &out, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -1063,7 +1066,7 @@ func (s *ContactsService) DeleteMany(ctx context.Context, params *DeleteContacts
 }
 
 // Export: Export contacts (GET /v1/contacts/export).
-func (s *ContactsService) Export(ctx context.Context, query *ExportContactsQuery, opts ...RequestOption) (*ContactList, error) {
+func (s *ContactsService) Export(ctx context.Context, query *ExportContactsQuery, opts ...RequestOption) (*ContactExport, error) {
 	q := url.Values{}
 	if query != nil {
 		if query.Format != nil {
@@ -1079,7 +1082,7 @@ func (s *ContactsService) Export(ctx context.Context, query *ExportContactsQuery
 	if q.Get("format") == "" {
 		q.Set("format", "json")
 	}
-	out := new(ContactList)
+	out := new(ContactExport)
 	err := s.core.do(ctx, "GET", "/v1/contacts/export", map[string]string{}, q, nil, false, out, opts)
 	if err != nil {
 		return nil, err
@@ -1233,7 +1236,7 @@ func newSegmentsContactsService(c *core) *SegmentsContactsService {
 }
 
 // List: List contacts in a segment (GET /v1/segments/{id}/contacts).
-func (s *SegmentsContactsService) List(ctx context.Context, id string, query *ListSegmentContactsQuery, opts ...RequestOption) (*ContactList, error) {
+func (s *SegmentsContactsService) List(ctx context.Context, id string, query *ListSegmentContactsQuery, opts ...RequestOption) (*SegmentContactList, error) {
 	q := url.Values{}
 	if query != nil {
 		if query.Limit != nil {
@@ -1243,7 +1246,7 @@ func (s *SegmentsContactsService) List(ctx context.Context, id string, query *Li
 			setQuery(q, "page", *query.Page)
 		}
 	}
-	out := new(ContactList)
+	out := new(SegmentContactList)
 	err := s.core.do(ctx, "GET", "/v1/segments/{id}/contacts", map[string]string{"id": id}, q, nil, false, out, opts)
 	if err != nil {
 		return nil, err
@@ -1515,8 +1518,8 @@ func (s *BroadcastsService) Create(ctx context.Context, params *CreateBroadcastR
 }
 
 // Get: Get broadcast details (GET /v1/broadcasts/{id}).
-func (s *BroadcastsService) Get(ctx context.Context, id string, opts ...RequestOption) (*Broadcast, error) {
-	out := new(Broadcast)
+func (s *BroadcastsService) Get(ctx context.Context, id string, opts ...RequestOption) (*BroadcastDetail, error) {
+	out := new(BroadcastDetail)
 	err := s.core.do(ctx, "GET", "/v1/broadcasts/{id}", map[string]string{"id": id}, nil, nil, false, out, opts)
 	if err != nil {
 		return nil, err
@@ -1581,8 +1584,8 @@ func (s *BroadcastsService) Duplicate(ctx context.Context, id string, opts ...Re
 }
 
 // Send: Send or schedule a broadcast (POST /v1/broadcasts/{id}/send).
-func (s *BroadcastsService) Send(ctx context.Context, id string, params *SendBroadcastParams, opts ...RequestOption) (*Broadcast, error) {
-	out := new(Broadcast)
+func (s *BroadcastsService) Send(ctx context.Context, id string, params *SendBroadcastParams, opts ...RequestOption) (*BroadcastSendResult, error) {
+	out := new(BroadcastSendResult)
 	err := s.core.do(ctx, "POST", "/v1/broadcasts/{id}/send", map[string]string{"id": id}, nil, params, false, out, opts)
 	if err != nil {
 		return nil, err
@@ -1601,8 +1604,8 @@ func (s *BroadcastsService) Cancel(ctx context.Context, id string, opts ...Reque
 }
 
 // SendTest: Send a test broadcast email (POST /v1/broadcasts/{id}/test).
-func (s *BroadcastsService) SendTest(ctx context.Context, id string, params *SendBroadcastTestParams, opts ...RequestOption) (*Email, error) {
-	out := new(Email)
+func (s *BroadcastsService) SendTest(ctx context.Context, id string, params *SendBroadcastTestParams, opts ...RequestOption) (*SendBroadcastTestResponse, error) {
+	out := new(SendBroadcastTestResponse)
 	err := s.core.do(ctx, "POST", "/v1/broadcasts/{id}/test", map[string]string{"id": id}, nil, params, false, out, opts)
 	if err != nil {
 		return nil, err
