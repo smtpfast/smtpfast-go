@@ -14026,6 +14026,475 @@
         "x-sdk-method": "connectCloudflareInbound"
       }
     },
+    "/v1/link-domains": {
+      "get": {
+        "operationId": "listLinkDomains",
+        "summary": "List link domains",
+        "description": "The team's custom link domains with their status and DNS records. available says whether the feature is on, included_in_plan whether the team's plan has it. Not in Resend. Requires the domain:read scope.",
+        "tags": [
+          "Domains"
+        ],
+        "responses": {
+          "200": {
+            "description": "Link domains",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "linkDomains"
+        ],
+        "x-sdk-method": "list"
+      },
+      "post": {
+        "operationId": "createLinkDomain",
+        "summary": "Add a link domain",
+        "description": "Add a custom hostname for tracking and unsubscribe links, such as links.example.com. It must be a subdomain of one of your verified sending domains, one per sending domain. Publish the CNAME record from dns_records; the link domain turns active once Cloudflare sees it and issues a certificate, usually within minutes. Paid plans only: 403 with code plan_upgrade_required on the free plan. 422 when the hostname is not under a verified sending domain, 409 when that domain already has one, 503 with code link_domains_unavailable when the feature is off. Not in Resend. Requires the domain:write scope and an owner or admin; 5 per hour per team.",
+        "tags": [
+          "Domains"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLinkDomainRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The link domain, pending until the CNAME record is in place",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomain"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - check your payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - the resource already exists or changed meanwhile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request is well formed but cannot be carried out in the current state, for example an unpublished template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainError"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "linkDomains"
+        ],
+        "x-sdk-method": "create"
+      }
+    },
+    "/v1/link-domains/{id}": {
+      "get": {
+        "operationId": "getLinkDomain",
+        "summary": "Get a link domain",
+        "description": "One link domain with the DNS records to publish: the CNAME pointing at SMTPfast, and any TXT ownership record Cloudflare offers. Shows the state from the last check; refresh asks Cloudflare again. Not in Resend. Requires the domain:read scope.",
+        "tags": [
+          "Domains"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The link domain ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The link domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomain"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "linkDomains"
+        ],
+        "x-sdk-method": "get"
+      },
+      "delete": {
+        "operationId": "deleteLinkDomain",
+        "summary": "Delete a link domain",
+        "description": "Mail stops using the link domain at once and the hostname is removed from Cloudflare. Links in mail already sent through it stop working once the hostname is gone. Not in Resend. Requires the domain:write scope and an owner or admin.",
+        "tags": [
+          "Domains"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The link domain ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainDeleted"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "linkDomains"
+        ],
+        "x-sdk-method": "delete"
+      }
+    },
+    "/v1/link-domains/{id}/refresh": {
+      "post": {
+        "operationId": "refreshLinkDomain",
+        "summary": "Refresh a link domain's status",
+        "description": "Ask Cloudflare for the current state now, instead of waiting for the automatic check (every few minutes while pending, daily once active). Also restarts automatic checks for a failed link domain. Not in Resend. Requires the domain:write scope; 30 per 10 minutes per team.",
+        "tags": [
+          "Domains"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The link domain ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The link domain with its current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomain"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainError"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "linkDomains"
+        ],
+        "x-sdk-method": "refresh"
+      }
+    },
     "/v1/forms/{id}/welcome-preview": {
       "post": {
         "operationId": "previewFormWelcomeEmail",
@@ -21030,6 +21499,246 @@
         "example": {
           "segment_id": "clx_segment123"
         }
+      },
+      "LinkDomainError": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "links.example.com must be a subdomain of one of your verified sending domains."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_hostname",
+              "reserved_hostname",
+              "no_matching_domain",
+              "domain_not_verified",
+              "link_domain_exists",
+              "link_domains_unavailable",
+              "link_domains_at_capacity",
+              "plan_upgrade_required",
+              "cloudflare_error"
+            ]
+          }
+        }
+      },
+      "CreateLinkDomainRequest": {
+        "type": "object",
+        "required": [
+          "hostname"
+        ],
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "example": "links.example.com",
+            "description": "A subdomain of one of your verified sending domains. One link domain per sending domain."
+          }
+        }
+      },
+      "LinkDomainDnsRecord": {
+        "type": "object",
+        "required": [
+          "type",
+          "name",
+          "value",
+          "ttl",
+          "purpose",
+          "required",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "CNAME",
+              "TXT"
+            ],
+            "example": "CNAME"
+          },
+          "name": {
+            "type": "string",
+            "example": "links.example.com"
+          },
+          "value": {
+            "type": "string",
+            "example": "links.smtpfa.st"
+          },
+          "ttl": {
+            "type": "string",
+            "example": "Auto"
+          },
+          "purpose": {
+            "type": "string",
+            "example": "Points the link domain at SMTPfast"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "The CNAME is required. A TXT record Cloudflare offers is optional: it lets the hostname activate before the CNAME is live."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "verified",
+              "not_needed"
+            ],
+            "description": "pending while the link domain is not active. Once it is active the CNAME is verified (keep it: certificate renewals need it) and a TXT record is not_needed, so you can remove it."
+          }
+        }
+      },
+      "LinkDomain": {
+        "type": "object",
+        "description": "A custom hostname for open tracking, click tracking and unsubscribe links. While it is active, email whose From address is on the same registrable domain uses it instead of smtpfa.st, in the body and in the List-Unsubscribe header.",
+        "required": [
+          "object",
+          "id",
+          "hostname",
+          "domain_id",
+          "domain",
+          "status",
+          "ssl_status",
+          "last_error",
+          "dns_records",
+          "verified_at",
+          "last_checked_at",
+          "created_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "link_domain"
+          },
+          "id": {
+            "type": "string",
+            "example": "cmlink123"
+          },
+          "hostname": {
+            "type": "string",
+            "example": "links.example.com"
+          },
+          "domain_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The sending domain the hostname sits under."
+          },
+          "domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "example.com"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "failed"
+            ],
+            "description": "pending until Cloudflare sees the CNAME record and issues the certificate, then active. failed means it will not become active without a change on your side (last_error says why); fix it and refresh. Mail uses the link domain only while it is active."
+          },
+          "ssl_status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "pending_validation",
+            "description": "The certificate status Cloudflare reports, for troubleshooting."
+          },
+          "last_error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the link domain is not active yet, when Cloudflare says."
+          },
+          "dns_records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkDomainDnsRecord"
+            }
+          },
+          "verified_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When it first became active."
+          },
+          "last_checked_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LinkDomainList": {
+        "type": "object",
+        "required": [
+          "object",
+          "has_more",
+          "data",
+          "available",
+          "included_in_plan"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "list"
+          },
+          "has_more": {
+            "type": "boolean",
+            "example": false
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkDomain"
+            }
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Whether custom link domains are available on this server. When false, creating one answers 503."
+          },
+          "included_in_plan": {
+            "type": "boolean",
+            "description": "Whether the team's plan includes custom link domains (every paid plan). When false, creating one answers 403 and mail uses smtpfa.st links, also through a link domain added earlier."
+          }
+        }
+      },
+      "LinkDomainDeleted": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "deleted"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "link_domain"
+          },
+          "id": {
+            "type": "string"
+          },
+          "deleted": {
+            "type": "boolean",
+            "example": true
+          }
+        }
       }
     }
   },
@@ -21064,7 +21773,7 @@
     },
     {
       "name": "Domains",
-      "description": "Manage and verify sending domains"
+      "description": "Manage and verify sending domains, and the custom link domains under them"
     },
     {
       "name": "API Keys",
