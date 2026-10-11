@@ -607,6 +607,11 @@ type CreateInboxParams struct {
 	Forwarding *bool `json:"forwarding,omitzero"`
 }
 
+type CreateLinkDomainRequest struct {
+	// Hostname: A subdomain of one of your verified sending domains. One link domain per sending domain.
+	Hostname string `json:"hostname"`
+}
+
 type CreateSegmentRequest struct {
 	Name        string           `json:"name"`
 	Description Nullable[string] `json:"description,omitzero"`
@@ -1282,6 +1287,60 @@ type InboxThreadListItem struct {
 	UnreadCount *int64 `json:"unread_count,omitzero"`
 	// Snippet: A preview of the most recent message. Not in Resend.
 	Snippet Nullable[string] `json:"snippet,omitzero"`
+}
+
+// LinkDomain: A custom hostname for open tracking, click tracking and unsubscribe links. While it is active, email whose From address is on the same registrable dom
+type LinkDomain struct {
+	Object   string `json:"object"`
+	ID       string `json:"id"`
+	Hostname string `json:"hostname"`
+	// DomainID: The sending domain the hostname sits under.
+	DomainID *string `json:"domain_id"`
+	Domain   *string `json:"domain"`
+	// Status: pending until Cloudflare sees the CNAME record and issues the certificate, then active. failed means it will not become active without a change on you
+	Status string `json:"status"`
+	// SslStatus: The certificate status Cloudflare reports, for troubleshooting.
+	SslStatus *string `json:"ssl_status"`
+	// LastError: Why the link domain is not active yet, when Cloudflare says.
+	LastError  *string               `json:"last_error"`
+	DNSRecords []LinkDomainDNSRecord `json:"dns_records"`
+	// VerifiedAt: When it first became active.
+	VerifiedAt    *string `json:"verified_at"`
+	LastCheckedAt *string `json:"last_checked_at"`
+	CreatedAt     string  `json:"created_at"`
+}
+
+type LinkDomainDNSRecord struct {
+	Type    string `json:"type"`
+	Name    string `json:"name"`
+	Value   string `json:"value"`
+	Ttl     string `json:"ttl"`
+	Purpose string `json:"purpose"`
+	// Required: The CNAME is required. A TXT record Cloudflare offers is optional: it lets the hostname activate before the CNAME is live.
+	Required bool `json:"required"`
+	// Status: pending while the link domain is not active. Once it is active the CNAME is verified (keep it: certificate renewals need it) and a TXT record is not_n
+	Status string `json:"status"`
+}
+
+type LinkDomainDeleted struct {
+	Object  string `json:"object"`
+	ID      string `json:"id"`
+	Deleted bool   `json:"deleted"`
+}
+
+type LinkDomainError struct {
+	Error string  `json:"error"`
+	Code  *string `json:"code,omitzero"`
+}
+
+type LinkDomainList struct {
+	Object  string       `json:"object"`
+	HasMore bool         `json:"has_more"`
+	Data    []LinkDomain `json:"data"`
+	// Available: Whether custom link domains are available on this server. When false, creating one answers 503.
+	Available bool `json:"available"`
+	// IncludedInPlan: Whether the team's plan includes custom link domains (every paid plan). When false, creating one answers 403 and mail uses smtpfa.st links, also throu
+	IncludedInPlan bool `json:"included_in_plan"`
 }
 
 type ListAPIKeysResponse struct {
