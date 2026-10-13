@@ -1919,6 +1919,10 @@ type SendEmailRequest struct {
 	ScheduledAt *string `json:"scheduled_at,omitzero"`
 	// Category: Defaults to marketing. Label receipts, password resets and other transactional mail transactional so a marketing opt-out does not block them; unlabell
 	Category *string `json:"category,omitzero"`
+	// TrackClicks: Not in Resend, which sets tracking per domain. Rewrite this email's links through the click tracker (true) or send them exactly as written (false). Le
+	TrackClicks *bool `json:"track_clicks,omitzero"`
+	// TrackOpens: Not in Resend. Add the open-tracking pixel to this email (true) or not (false). Left out, the account's tracking settings apply. Over SMTP, set the X-
+	TrackOpens *bool `json:"track_opens,omitzero"`
 	// HTML: HTML body of the email. Include `{{unsubscribe_url}}` (or the Resend-compatible `{{{RESEND_UNSUBSCRIBE_URL}}}`) anywhere in the body and SMTPfast subs
 	HTML *string `json:"html,omitzero"`
 	// Text: Plain text fallback body. Supports the same `{{unsubscribe_url}}` placeholder as the HTML body.
