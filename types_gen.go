@@ -156,19 +156,23 @@ type Broadcast struct {
 	Name     string  `json:"name"`
 	Audience *string `json:"audience,omitzero"`
 	// AudienceMeta: Details of the audience, such as the segment_id
-	AudienceMeta map[string]any   `json:"audience_meta,omitzero"`
-	From         Nullable[string] `json:"from,omitzero"`
-	ReplyTo      Nullable[string] `json:"reply_to,omitzero"`
-	Subject      Nullable[string] `json:"subject,omitzero"`
-	PreviewText  Nullable[string] `json:"preview_text,omitzero"`
-	HTML         Nullable[string] `json:"html,omitzero"`
-	Text         Nullable[string] `json:"text,omitzero"`
-	Markdown     Nullable[string] `json:"markdown,omitzero"`
-	Status       string           `json:"status"`
-	ScheduledAt  Nullable[string] `json:"scheduled_at,omitzero"`
-	QueuedAt     Nullable[string] `json:"queued_at,omitzero"`
-	SentAt       Nullable[string] `json:"sent_at,omitzero"`
-	CanceledAt   Nullable[string] `json:"canceled_at,omitzero"`
+	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
+	// SegmentID: The segment the broadcast goes to when audience is segment, otherwise null
+	SegmentID   Nullable[string] `json:"segment_id,omitzero"`
+	From        Nullable[string] `json:"from,omitzero"`
+	ReplyTo     Nullable[string] `json:"reply_to,omitzero"`
+	Subject     Nullable[string] `json:"subject,omitzero"`
+	PreviewText Nullable[string] `json:"preview_text,omitzero"`
+	HTML        Nullable[string] `json:"html,omitzero"`
+	Text        Nullable[string] `json:"text,omitzero"`
+	Markdown    Nullable[string] `json:"markdown,omitzero"`
+	Status      string           `json:"status"`
+	ScheduledAt Nullable[string] `json:"scheduled_at,omitzero"`
+	QueuedAt    Nullable[string] `json:"queued_at,omitzero"`
+	SentAt      Nullable[string] `json:"sent_at,omitzero"`
+	CanceledAt  Nullable[string] `json:"canceled_at,omitzero"`
+	// ArchivedAt: When the broadcast was archived. Archived broadcasts are left out of the list unless archived=true or archived=all.
+	ArchivedAt Nullable[string] `json:"archived_at,omitzero"`
 	// PausedAt: Set when the campaign was stopped mid-send by the deliverability guard
 	PausedAt Nullable[string] `json:"paused_at,omitzero"`
 	// PauseReason: Why the campaign was paused, for example the complaint rate that tripped the guard
@@ -194,19 +198,23 @@ type BroadcastDetail struct {
 	Name     string  `json:"name"`
 	Audience *string `json:"audience,omitzero"`
 	// AudienceMeta: Details of the audience, such as the segment_id
-	AudienceMeta map[string]any   `json:"audience_meta,omitzero"`
-	From         Nullable[string] `json:"from,omitzero"`
-	ReplyTo      Nullable[string] `json:"reply_to,omitzero"`
-	Subject      Nullable[string] `json:"subject,omitzero"`
-	PreviewText  Nullable[string] `json:"preview_text,omitzero"`
-	HTML         Nullable[string] `json:"html,omitzero"`
-	Text         Nullable[string] `json:"text,omitzero"`
-	Markdown     Nullable[string] `json:"markdown,omitzero"`
-	Status       string           `json:"status"`
-	ScheduledAt  Nullable[string] `json:"scheduled_at,omitzero"`
-	QueuedAt     Nullable[string] `json:"queued_at,omitzero"`
-	SentAt       Nullable[string] `json:"sent_at,omitzero"`
-	CanceledAt   Nullable[string] `json:"canceled_at,omitzero"`
+	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
+	// SegmentID: The segment the broadcast goes to when audience is segment, otherwise null
+	SegmentID   Nullable[string] `json:"segment_id,omitzero"`
+	From        Nullable[string] `json:"from,omitzero"`
+	ReplyTo     Nullable[string] `json:"reply_to,omitzero"`
+	Subject     Nullable[string] `json:"subject,omitzero"`
+	PreviewText Nullable[string] `json:"preview_text,omitzero"`
+	HTML        Nullable[string] `json:"html,omitzero"`
+	Text        Nullable[string] `json:"text,omitzero"`
+	Markdown    Nullable[string] `json:"markdown,omitzero"`
+	Status      string           `json:"status"`
+	ScheduledAt Nullable[string] `json:"scheduled_at,omitzero"`
+	QueuedAt    Nullable[string] `json:"queued_at,omitzero"`
+	SentAt      Nullable[string] `json:"sent_at,omitzero"`
+	CanceledAt  Nullable[string] `json:"canceled_at,omitzero"`
+	// ArchivedAt: When the broadcast was archived. Archived broadcasts are left out of the list unless archived=true or archived=all.
+	ArchivedAt Nullable[string] `json:"archived_at,omitzero"`
 	// PausedAt: Set when the campaign was stopped mid-send by the deliverability guard
 	PausedAt Nullable[string] `json:"paused_at,omitzero"`
 	// PauseReason: Why the campaign was paused, for example the complaint rate that tripped the guard
@@ -238,10 +246,13 @@ type BroadcastList struct {
 	HasMore  bool        `json:"has_more"`
 	Page     *int64      `json:"page,omitzero"`
 	PageSize *int64      `json:"page_size,omitzero"`
-	// FilteredTotal: Broadcasts matching the status filter
+	// FilteredTotal: Broadcasts matching the status, search and archived filters
 	FilteredTotal *int64 `json:"filtered_total,omitzero"`
-	// Total: Every broadcast of the team
-	Total        *int64           `json:"total,omitzero"`
+	// Total: Every broadcast of the team that is not archived
+	Total *int64 `json:"total,omitzero"`
+	// ArchivedTotal: Archived broadcasts of the team
+	ArchivedTotal *int64 `json:"archived_total,omitzero"`
+	// StatusCounts: Broadcasts that are not archived, per status
 	StatusCounts map[string]int64 `json:"status_counts,omitzero"`
 }
 
@@ -303,19 +314,23 @@ type BroadcastSendResult struct {
 	Name     string  `json:"name"`
 	Audience *string `json:"audience,omitzero"`
 	// AudienceMeta: Details of the audience, such as the segment_id
-	AudienceMeta map[string]any   `json:"audience_meta,omitzero"`
-	From         Nullable[string] `json:"from,omitzero"`
-	ReplyTo      Nullable[string] `json:"reply_to,omitzero"`
-	Subject      Nullable[string] `json:"subject,omitzero"`
-	PreviewText  Nullable[string] `json:"preview_text,omitzero"`
-	HTML         Nullable[string] `json:"html,omitzero"`
-	Text         Nullable[string] `json:"text,omitzero"`
-	Markdown     Nullable[string] `json:"markdown,omitzero"`
-	Status       string           `json:"status"`
-	ScheduledAt  Nullable[string] `json:"scheduled_at,omitzero"`
-	QueuedAt     Nullable[string] `json:"queued_at,omitzero"`
-	SentAt       Nullable[string] `json:"sent_at,omitzero"`
-	CanceledAt   Nullable[string] `json:"canceled_at,omitzero"`
+	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
+	// SegmentID: The segment the broadcast goes to when audience is segment, otherwise null
+	SegmentID   Nullable[string] `json:"segment_id,omitzero"`
+	From        Nullable[string] `json:"from,omitzero"`
+	ReplyTo     Nullable[string] `json:"reply_to,omitzero"`
+	Subject     Nullable[string] `json:"subject,omitzero"`
+	PreviewText Nullable[string] `json:"preview_text,omitzero"`
+	HTML        Nullable[string] `json:"html,omitzero"`
+	Text        Nullable[string] `json:"text,omitzero"`
+	Markdown    Nullable[string] `json:"markdown,omitzero"`
+	Status      string           `json:"status"`
+	ScheduledAt Nullable[string] `json:"scheduled_at,omitzero"`
+	QueuedAt    Nullable[string] `json:"queued_at,omitzero"`
+	SentAt      Nullable[string] `json:"sent_at,omitzero"`
+	CanceledAt  Nullable[string] `json:"canceled_at,omitzero"`
+	// ArchivedAt: When the broadcast was archived. Archived broadcasts are left out of the list unless archived=true or archived=all.
+	ArchivedAt Nullable[string] `json:"archived_at,omitzero"`
 	// PausedAt: Set when the campaign was stopped mid-send by the deliverability guard
 	PausedAt Nullable[string] `json:"paused_at,omitzero"`
 	// PauseReason: Why the campaign was paused, for example the complaint rate that tripped the guard
@@ -763,6 +778,8 @@ type DeletedObject struct {
 type Domain struct {
 	ID     string `json:"id"`
 	Domain string `json:"domain"`
+	// Name: Same as domain. Resend calls this field name.
+	Name *string `json:"name,omitzero"`
 	// Status: GET /v1/domains/{id} answers pending for a verified domain whose required records are no longer live.
 	Status string `json:"status"`
 	// Receiving: Inbound email for the domain
@@ -798,6 +815,8 @@ type DomainEventsItem struct {
 type DomainListItem struct {
 	ID     string `json:"id"`
 	Domain string `json:"domain"`
+	// Name: Same as domain. Resend calls this field name.
+	Name *string `json:"name,omitzero"`
 	// Status: pending, verifying, verified or failed
 	Status           string  `json:"status"`
 	DKIMStatus       string  `json:"dkim_status"`
@@ -1310,6 +1329,21 @@ type LinkDomain struct {
 	CreatedAt     string  `json:"created_at"`
 }
 
+type LinkDomainConnectCheck struct {
+	// Available: Whether the DNS provider can add the CNAME record in one click through Domain Connect.
+	Available bool `json:"available"`
+	// Provider: The DNS provider, when discovery found one.
+	Provider *string `json:"provider"`
+	// Reason: Why one-click setup is not available, when it is not.
+	Reason *string `json:"reason"`
+}
+
+type LinkDomainConnectLink struct {
+	// URL: The signed link to open. The DNS provider shows the CNAME record and asks the domain owner to approve it.
+	URL      string `json:"url"`
+	Provider string `json:"provider"`
+}
+
 type LinkDomainDNSRecord struct {
 	Type    string `json:"type"`
 	Name    string `json:"name"`
@@ -1372,8 +1406,9 @@ type ListBroadcastRecipientsQuery struct {
 }
 
 type ListBroadcastsQuery struct {
-	Status *string `json:"status,omitzero"`
-	Q      *string `json:"q,omitzero"`
+	Status   *string `json:"status,omitzero"`
+	Q        *string `json:"q,omitzero"`
+	Archived *string `json:"archived,omitzero"`
 }
 
 type ListClickedLinksQuery struct {
