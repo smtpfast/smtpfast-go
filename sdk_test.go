@@ -99,6 +99,18 @@ func TestPathAndQuery(t *testing.T) {
 	}
 }
 
+func TestRejectsEmptyOrDotPathParam(t *testing.T) {
+	c, rec := newTestClient()
+	for _, id := range []string{"", ".", ".."} {
+		if _, err := c.Emails.Get(ctx, id); err == nil {
+			t.Fatalf("no error for %q", id)
+		}
+	}
+	if len(rec.calls) != 0 {
+		t.Fatalf("sent %d requests", len(rec.calls))
+	}
+}
+
 func TestErrors(t *testing.T) {
 	c, _ := newTestClient(reply{status: 404, body: `{"error":"Email not found"}`})
 	_, err := c.Emails.Get(ctx, "em_x")
