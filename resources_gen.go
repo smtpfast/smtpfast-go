@@ -1500,6 +1500,9 @@ func (s *BroadcastsService) List(ctx context.Context, query *ListBroadcastsQuery
 		if query.Q != nil {
 			setQuery(q, "q", *query.Q)
 		}
+		if query.Archived != nil {
+			setQuery(q, "archived", *query.Archived)
+		}
 	}
 	out := new(BroadcastList)
 	err := s.core.do(ctx, "GET", "/v1/broadcasts", map[string]string{}, q, nil, false, out, opts)
@@ -1599,6 +1602,26 @@ func (s *BroadcastsService) Send(ctx context.Context, id string, params *SendBro
 func (s *BroadcastsService) Cancel(ctx context.Context, id string, opts ...RequestOption) (*Broadcast, error) {
 	out := new(Broadcast)
 	err := s.core.do(ctx, "POST", "/v1/broadcasts/{id}/cancel", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Archive: Archive a broadcast (POST /v1/broadcasts/{id}/archive).
+func (s *BroadcastsService) Archive(ctx context.Context, id string, opts ...RequestOption) (*Broadcast, error) {
+	out := new(Broadcast)
+	err := s.core.do(ctx, "POST", "/v1/broadcasts/{id}/archive", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Unarchive: Unarchive a broadcast (POST /v1/broadcasts/{id}/unarchive).
+func (s *BroadcastsService) Unarchive(ctx context.Context, id string, opts ...RequestOption) (*Broadcast, error) {
+	out := new(Broadcast)
+	err := s.core.do(ctx, "POST", "/v1/broadcasts/{id}/unarchive", map[string]string{"id": id}, nil, nil, false, out, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -2380,6 +2403,26 @@ func (s *LinkDomainsService) Get(ctx context.Context, id string, opts ...Request
 func (s *LinkDomainsService) Delete(ctx context.Context, id string, opts ...RequestOption) (*LinkDomainDeleted, error) {
 	out := new(LinkDomainDeleted)
 	err := s.core.do(ctx, "DELETE", "/v1/link-domains/{id}", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GetDomainConnect: Check one-click DNS setup for a link domain (GET /v1/link-domains/{id}/domain-connect).
+func (s *LinkDomainsService) GetDomainConnect(ctx context.Context, id string, opts ...RequestOption) (*LinkDomainConnectCheck, error) {
+	out := new(LinkDomainConnectCheck)
+	err := s.core.do(ctx, "GET", "/v1/link-domains/{id}/domain-connect", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// StartDomainConnect: Set up a link domain's DNS in one click (POST /v1/link-domains/{id}/domain-connect).
+func (s *LinkDomainsService) StartDomainConnect(ctx context.Context, id string, opts ...RequestOption) (*LinkDomainConnectLink, error) {
+	out := new(LinkDomainConnectLink)
+	err := s.core.do(ctx, "POST", "/v1/link-domains/{id}/domain-connect", map[string]string{"id": id}, nil, nil, false, out, opts)
 	if err != nil {
 		return nil, err
 	}

@@ -6162,7 +6162,7 @@
           {
             "name": "q",
             "in": "query",
-            "description": "Search by email, first name, or last name",
+            "description": "Search by email, first name, or last name. Several email addresses separated by commas, spaces or new lines are matched exactly, up to 100.",
             "schema": {
               "type": "string"
             }
@@ -8990,6 +8990,20 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "description": "false leaves archived broadcasts out, true lists only archived ones, all lists both",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "false",
+                "true",
+                "all"
+              ],
+              "default": "false"
+            }
           }
         ],
         "responses": {
@@ -10013,6 +10027,190 @@
           "broadcasts"
         ],
         "x-sdk-method": "cancel"
+      }
+    },
+    "/v1/broadcasts/{id}/archive": {
+      "post": {
+        "operationId": "archiveBroadcast",
+        "summary": "Archive a broadcast",
+        "description": "Hide a sent, canceled or failed broadcast from the default list. The broadcast, its recipients and its stats stay available, and the list shows it with archived=true. Archiving an archived broadcast changes nothing.",
+        "tags": [
+          "Broadcasts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The broadcast ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Broadcast archived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Broadcast"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - check your payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "broadcasts"
+        ],
+        "x-sdk-method": "archive"
+      }
+    },
+    "/v1/broadcasts/{id}/unarchive": {
+      "post": {
+        "operationId": "unarchiveBroadcast",
+        "summary": "Unarchive a broadcast",
+        "description": "Return an archived broadcast to the default list. Unarchiving a broadcast that is not archived changes nothing.",
+        "tags": [
+          "Broadcasts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The broadcast ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Broadcast unarchived",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Broadcast"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "broadcasts"
+        ],
+        "x-sdk-method": "unarchive"
       }
     },
     "/v1/broadcasts/{id}/test": {
@@ -14388,6 +14586,188 @@
         "x-sdk-method": "delete"
       }
     },
+    "/v1/link-domains/{id}/domain-connect": {
+      "get": {
+        "operationId": "getLinkDomainDomainConnect",
+        "summary": "Check one-click DNS setup for a link domain",
+        "description": "Whether the link domain's DNS provider can add its CNAME record through Domain Connect, the open standard behind one-click DNS setup. Not in Resend. Requires the domain:read scope; 30 checks per 10 minutes per team.",
+        "tags": [
+          "Domains"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The link domain ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether one-click setup is available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainConnectCheck"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "linkDomains"
+        ],
+        "x-sdk-method": "getDomainConnect"
+      },
+      "post": {
+        "operationId": "startLinkDomainDomainConnect",
+        "summary": "Set up a link domain's DNS in one click",
+        "description": "Returns a signed Domain Connect link. The domain owner opens it, approves the CNAME record at the DNS provider, and the link domain turns active once Cloudflare sees the record. 409 with the reason when the provider cannot apply it, or the link domain is not pending (refresh a failed one first). Not in Resend. Requires the domain:write scope; 30 per 10 minutes per team.",
+        "tags": [
+          "Domains"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The link domain ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The link to open",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDomainConnectLink"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - the resource already exists or changed meanwhile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "linkDomains"
+        ],
+        "x-sdk-method": "startDomainConnect"
+      }
+    },
     "/v1/link-domains/{id}/refresh": {
       "post": {
         "operationId": "refreshLinkDomain",
@@ -16704,7 +17084,7 @@
           },
           "track_clicks": {
             "type": "boolean",
-            "description": "Not in Resend, which sets tracking per domain. Rewrite this email's links through the click tracker (true) or send them exactly as written (false). Left out, the account's tracking settings apply, including the setting for transactional email. Over SMTP, set the X-SMTPfast-Track-Clicks header to true or false instead; it is removed before sending. To keep one link out of tracking, such as a password reset link with a token, add data-smtpfast-track=\"off\" to its <a> tag; the attribute is removed before sending. null is the same as leaving it out; any other value that is not true or false is refused with 400.",
+            "description": "Not in Resend, which sets tracking per domain. Rewrite this email's links through the click tracker (true) or send them exactly as written (false). Left out, the account's tracking settings apply, including the setting for transactional email, except that a contact-form relay (every recipient on the From domain or a parent or subdomain of it, Reply-To on an unrelated domain, not sent from an inbox) gets no click tracking. Over SMTP, set the X-SMTPfast-Track-Clicks header to true or false instead; it is removed before sending. To keep one link out of tracking, such as a password reset link with a token, add data-smtpfast-track=\"off\" to its <a> tag; the attribute is removed before sending. null is the same as leaving it out; any other value that is not true or false is refused with 400.",
             "example": false
           },
           "track_opens": {
@@ -18341,18 +18721,24 @@
           "filtered_total": {
             "type": "integer",
             "example": 1,
-            "description": "Broadcasts matching the status filter"
+            "description": "Broadcasts matching the status, search and archived filters"
           },
           "total": {
             "type": "integer",
             "example": 1,
-            "description": "Every broadcast of the team"
+            "description": "Every broadcast of the team that is not archived"
+          },
+          "archived_total": {
+            "type": "integer",
+            "example": 0,
+            "description": "Archived broadcasts of the team"
           },
           "status_counts": {
             "type": "object",
             "additionalProperties": {
               "type": "integer"
-            }
+            },
+            "description": "Broadcasts that are not archived, per status"
           }
         }
       },
@@ -18384,6 +18770,13 @@
           },
           "audience_meta": {
             "$ref": "#/components/schemas/AudienceMeta"
+          },
+          "segment_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The segment the broadcast goes to when audience is segment, otherwise null"
           },
           "from": {
             "type": [
@@ -18469,6 +18862,14 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "archived_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the broadcast was archived. Archived broadcasts are left out of the list unless archived=true or archived=all."
           },
           "paused_at": {
             "type": [
@@ -20057,6 +20458,11 @@
             "type": "string",
             "example": "yourapp.com"
           },
+          "name": {
+            "type": "string",
+            "example": "yourapp.com",
+            "description": "Same as domain. Resend calls this field name."
+          },
           "status": {
             "type": "string",
             "example": "verified",
@@ -20113,6 +20519,11 @@
           "domain": {
             "type": "string",
             "example": "yourapp.com"
+          },
+          "name": {
+            "type": "string",
+            "example": "yourapp.com",
+            "description": "Same as domain. Resend calls this field name."
           },
           "status": {
             "type": "string",
@@ -21726,6 +22137,52 @@
           "included_in_plan": {
             "type": "boolean",
             "description": "Whether the team's plan includes custom link domains (every paid plan). When false, creating one answers 403 and mail uses smtpfa.st links, also through a link domain added earlier."
+          }
+        }
+      },
+      "LinkDomainConnectCheck": {
+        "type": "object",
+        "required": [
+          "available",
+          "provider",
+          "reason"
+        ],
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "Whether the DNS provider can add the CNAME record in one click through Domain Connect."
+          },
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Cloudflare",
+            "description": "The DNS provider, when discovery found one."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why one-click setup is not available, when it is not."
+          }
+        }
+      },
+      "LinkDomainConnectLink": {
+        "type": "object",
+        "required": [
+          "url",
+          "provider"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The signed link to open. The DNS provider shows the CNAME record and asks the domain owner to approve it."
+          },
+          "provider": {
+            "type": "string",
+            "example": "Cloudflare"
           }
         }
       },
