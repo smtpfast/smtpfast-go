@@ -81,6 +81,10 @@ func (c *core) do(ctx context.Context, method, route string, pathParams map[stri
 		timeout = *settings.timeout
 	}
 	for name, value := range pathParams {
+		// "", "." or ".." would become a dot-segment that resolves to another endpoint.
+		if value == "" || value == "." || value == ".." {
+			return fmt.Errorf("smtpfast: invalid path parameter %s: %q", name, value)
+		}
 		route = strings.ReplaceAll(route, "{"+name+"}", url.PathEscape(value))
 	}
 	target := c.baseURL + route
