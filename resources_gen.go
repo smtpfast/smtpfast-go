@@ -315,6 +315,9 @@ func (s *EmailsService) GetMetrics(ctx context.Context, query *GetEmailMetricsQu
 		if query.BroadcastID != nil {
 			setQuery(q, "broadcast_id", *query.BroadcastID)
 		}
+		if query.Include != nil {
+			setQuery(q, "include", *query.Include)
+		}
 	}
 	out := new(GetEmailMetricsResponse)
 	err := s.core.do(ctx, "GET", "/v1/emails/metrics", map[string]string{}, q, nil, false, out, opts)

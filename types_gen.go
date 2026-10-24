@@ -80,7 +80,8 @@ type AnalyticsUsage struct {
 	Delivered *int64  `json:"delivered,omitzero"`
 	Bounced   *int64  `json:"bounced,omitzero"`
 	Limit     *int64  `json:"limit,omitzero"`
-	Tier      *string `json:"tier,omitzero"`
+	// Tier: The plan: free, starter, growth or scale.
+	Tier *string `json:"tier,omitzero"`
 }
 
 // AnalyticsWindow: Present when days or domain is passed
@@ -435,8 +436,9 @@ type ContactList struct {
 	// ContactLimit: The plan's contact limit, with any override for the account
 	ContactLimit *int64 `json:"contact_limit,omitzero"`
 	// ContactLimitBase: The plan's contact limit without overrides
-	ContactLimitBase *int64  `json:"contact_limit_base,omitzero"`
-	Tier             *string `json:"tier,omitzero"`
+	ContactLimitBase *int64 `json:"contact_limit_base,omitzero"`
+	// Tier: The plan: free, starter, growth or scale.
+	Tier *string `json:"tier,omitzero"`
 }
 
 // ContactListItem: A contact as lists return it: the summary fields plus properties, segments and the suppression.
@@ -882,7 +884,7 @@ type Email struct {
 	// Category: Decides which suppressions apply and whether the List-Unsubscribe header went out. marketing unless the email was labelled transactional; broadcasts,
 	Category string `json:"category"`
 	Status   string `json:"status"`
-	// ReplyTo: The Reply-To address the email was sent with, or null.
+	// ReplyTo: The Reply-To address the email was sent with, or the first one when it had several, or null.
 	ReplyTo *string `json:"reply_to"`
 	// Tags: The tags given at send time, as name/value pairs. Empty when none were given.
 	Tags []EmailTagsItem `json:"tags"`
@@ -988,6 +990,7 @@ type GetCapabilitiesResponse struct {
 }
 
 type GetCapabilitiesResponseAccount struct {
+	// Tier: The plan: free, starter, growth or scale.
 	Tier   *string `json:"tier,omitzero"`
 	Status *string `json:"status,omitzero"`
 }
@@ -1035,6 +1038,7 @@ type GetEmailMetricsQuery struct {
 	DomainID    *string `json:"domain_id,omitzero"`
 	EmailID     *string `json:"email_id,omitzero"`
 	BroadcastID *string `json:"broadcast_id,omitzero"`
+	Include     *string `json:"include,omitzero"`
 }
 
 type GetEmailMetricsResponse struct {
@@ -1049,6 +1053,8 @@ type GetEmailMetricsResponse struct {
 	Totals map[string]float64 `json:"totals"`
 	// Data: One row per combination of the requested dimensions, with the requested metrics. Absent when no dimensions are requested.
 	Data []GetEmailMetricsResponseDataItem `json:"data,omitzero"`
+	// Providers: With include=providers: one row per mailbox provider with at least one sent email, most sent first. A recipient domain not classified yet counts as ot
+	Providers []MailboxProviderMetrics `json:"providers,omitzero"`
 }
 
 type GetEmailMetricsResponseDataItem struct {
@@ -1648,6 +1654,32 @@ type LogEventTagsItem struct {
 	Value *string `json:"value,omitzero"`
 }
 
+// MailboxProviderMetrics: Sent email to one mailbox provider. Each email counts once, by the domain of its first To address; a domain outside the consumer domains is classified
+type MailboxProviderMetrics struct {
+	Provider string `json:"provider"`
+	Name     string `json:"name"`
+	// Sent: Handed to SES: sent, delivered, opened, clicked, bounced or complained.
+	Sent int64 `json:"sent"`
+	// Share: Percent of all sent email in the breakdown.
+	Share float64 `json:"share"`
+	// Delivered: Accepted by the receiving server, complained included.
+	Delivered  int64 `json:"delivered"`
+	Bounced    int64 `json:"bounced"`
+	Complained int64 `json:"complained"`
+	// TrackedDelivered: Delivered with open tracking on: the open rate's denominator.
+	TrackedDelivered int64 `json:"tracked_delivered"`
+	// Opened: Of tracked_delivered, opened at least once.
+	Opened int64 `json:"opened"`
+	// DeliveryRate: delivered / (delivered + bounced): over emails with a delivery or bounce report.
+	DeliveryRate *float64 `json:"delivery_rate"`
+	// OpenRate: opened / tracked_delivered. Apple Mail Privacy Protection loads the open pixel before anyone reads the email, so the icloud rate reads high.
+	OpenRate *float64 `json:"open_rate"`
+	// BounceRate: bounced / (delivered + bounced).
+	BounceRate *float64 `json:"bounce_rate"`
+	// ComplaintRate: complained / delivered.
+	ComplaintRate *float64 `json:"complaint_rate"`
+}
+
 type MarkReceivedEmailsParams struct {
 	IDs  []string `json:"ids"`
 	Read bool     `json:"read"`
@@ -1898,7 +1930,8 @@ type SegmentList struct {
 	Data         []SegmentSummary `json:"data"`
 	Total        int64            `json:"total"`
 	SegmentLimit int64            `json:"segment_limit"`
-	Tier         *string          `json:"tier,omitzero"`
+	// Tier: The plan: free, starter, growth or scale.
+	Tier *string `json:"tier,omitzero"`
 }
 
 type SegmentSummary struct {
@@ -1942,7 +1975,7 @@ type SendEmailRequest struct {
 	Cc StringList `json:"cc,omitzero"`
 	// Bcc: Bcc recipients
 	Bcc StringList `json:"bcc,omitzero"`
-	// ReplyTo: Reply-To address or addresses
+	// ReplyTo: Reply-To address or addresses, up to 50. Every address goes in the Reply-To header.
 	ReplyTo StringList `json:"reply_to,omitzero"`
 	// Subject: Email subject line
 	Subject *string `json:"subject,omitzero"`
