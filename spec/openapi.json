@@ -993,7 +993,7 @@
       "get": {
         "operationId": "getEmailMetrics",
         "summary": "Retrieve email metrics",
-        "description": "Resend-compatible counts and rates over a date range, for transactional and broadcast email together. Leave dimensions out for one totals row; add period, domain, email or broadcast (email and broadcast cannot be combined) to break the numbers down. Each lifecycle timestamp counts in its own period. Sends where every recipient is the SES mailbox simulator are left out. Rates are percentages with one decimal. Open and click metrics need tracking on. Requires the email:read scope.",
+        "description": "Resend-compatible counts and rates over a date range, for transactional and broadcast email together. Leave dimensions out for one totals row; add period, domain, email or broadcast (email and broadcast cannot be combined) to break the numbers down. Each lifecycle timestamp counts in its own period. Sends where every recipient is the SES mailbox simulator are left out. Rates are percentages with one decimal. Open and click metrics need tracking on. Add include=providers for a breakdown by mailbox provider (Gmail, Outlook, iCloud, Yahoo, Proton, other). Requires the email:read scope.",
         "tags": [
           "Emails"
         ],
@@ -1076,6 +1076,17 @@
             "description": "Comma-separated broadcast ids, up to 100. Not with email.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "description": "providers adds a providers array: sent email by the recipient's mailbox provider over the range and the id filters, each email counted once by its first To address, by the time it was created and its current status. Not part of Resend's API.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "providers"
+              ]
             }
           }
         ],
@@ -1217,6 +1228,13 @@
                           "delivered": 169,
                           "open_rate": 49.7
                         }
+                      }
+                    },
+                    "providers": {
+                      "type": "array",
+                      "description": "With include=providers: one row per mailbox provider with at least one sent email, most sent first. A recipient domain not classified yet counts as other for that request (up to 50 new domains are looked up per request).",
+                      "items": {
+                        "$ref": "#/components/schemas/MailboxProviderMetrics"
                       }
                     }
                   }
@@ -7290,7 +7308,8 @@
                       "properties": {
                         "tier": {
                           "type": "string",
-                          "example": "pro"
+                          "example": "growth",
+                          "description": "The plan: free, starter, growth or scale."
                         },
                         "status": {
                           "type": "string",
@@ -17020,10 +17039,11 @@
                 "items": {
                   "type": "string",
                   "format": "email"
-                }
+                },
+                "maxItems": 50
               }
             ],
-            "description": "Reply-To address or addresses"
+            "description": "Reply-To address or addresses, up to 50. Every address goes in the Reply-To header."
           },
           "subject": {
             "type": "string",
@@ -17252,7 +17272,7 @@
               "string",
               "null"
             ],
-            "description": "The Reply-To address the email was sent with, or null."
+            "description": "The Reply-To address the email was sent with, or the first one when it had several, or null."
           },
           "tags": {
             "type": "array",
@@ -17663,7 +17683,7 @@
             },
             "example": {
               "company": "Acme",
-              "plan": "pro"
+              "plan": "growth"
             }
           },
           "segment_ids": {
@@ -17874,17 +17894,18 @@
           },
           "contact_limit": {
             "type": "integer",
-            "example": 25000,
+            "example": 50000,
             "description": "The plan's contact limit, with any override for the account"
           },
           "contact_limit_base": {
             "type": "integer",
-            "example": 25000,
+            "example": 50000,
             "description": "The plan's contact limit without overrides"
           },
           "tier": {
             "type": "string",
-            "example": "pro"
+            "example": "growth",
+            "description": "The plan: free, starter, growth or scale."
           }
         }
       },
@@ -18285,7 +18306,8 @@
           },
           "tier": {
             "type": "string",
-            "example": "starter"
+            "example": "starter",
+            "description": "The plan: free, starter, growth or scale."
           }
         }
       },
@@ -19230,6 +19252,107 @@
           "bounce_rate": {
             "type": "number",
             "example": 0.7
+          }
+        }
+      },
+      "MailboxProviderMetrics": {
+        "type": "object",
+        "description": "Sent email to one mailbox provider. Each email counts once, by the domain of its first To address; a domain outside the consumer domains is classified by its MX hosts, so Google Workspace counts as gmail and Microsoft 365 as outlook. Rates are percentages with two decimals, null when there is nothing to rate yet.",
+        "required": [
+          "provider",
+          "name",
+          "sent",
+          "share",
+          "delivered",
+          "bounced",
+          "complained",
+          "tracked_delivered",
+          "opened",
+          "delivery_rate",
+          "open_rate",
+          "bounce_rate",
+          "complaint_rate"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "gmail",
+              "outlook",
+              "icloud",
+              "yahoo",
+              "proton",
+              "other"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "example": "Gmail"
+          },
+          "sent": {
+            "type": "integer",
+            "description": "Handed to SES: sent, delivered, opened, clicked, bounced or complained.",
+            "example": 812
+          },
+          "share": {
+            "type": "number",
+            "description": "Percent of all sent email in the breakdown.",
+            "example": 67.44
+          },
+          "delivered": {
+            "type": "integer",
+            "description": "Accepted by the receiving server, complained included.",
+            "example": 798
+          },
+          "bounced": {
+            "type": "integer",
+            "example": 9
+          },
+          "complained": {
+            "type": "integer",
+            "example": 1
+          },
+          "tracked_delivered": {
+            "type": "integer",
+            "description": "Delivered with open tracking on: the open rate's denominator.",
+            "example": 790
+          },
+          "opened": {
+            "type": "integer",
+            "description": "Of tracked_delivered, opened at least once.",
+            "example": 402
+          },
+          "delivery_rate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "delivered / (delivered + bounced): over emails with a delivery or bounce report.",
+            "example": 98.88
+          },
+          "open_rate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "opened / tracked_delivered. Apple Mail Privacy Protection loads the open pixel before anyone reads the email, so the icloud rate reads high.",
+            "example": 50.89
+          },
+          "bounce_rate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "bounced / (delivered + bounced).",
+            "example": 1.12
+          },
+          "complaint_rate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "complained / delivered.",
+            "example": 0.13
           }
         }
       },
@@ -21533,7 +21656,7 @@
                   },
                   "limit": {
                     "type": "integer",
-                    "example": 50000
+                    "example": 100000
                   },
                   "sent": {
                     "type": "integer",
@@ -21564,7 +21687,7 @@
               },
               "effective_remaining": {
                 "type": "integer",
-                "example": 41580,
+                "example": 91580,
                 "description": "What can still be sent before a send is refused: the monthly allowance left plus credits"
               }
             }
@@ -21581,7 +21704,7 @@
               },
               "limit": {
                 "type": "integer",
-                "example": 25000
+                "example": 50000
               }
             }
           },
@@ -21823,11 +21946,12 @@
               },
               "limit": {
                 "type": "integer",
-                "example": 50000
+                "example": 100000
               },
               "tier": {
                 "type": "string",
-                "example": "pro"
+                "example": "growth",
+                "description": "The plan: free, starter, growth or scale."
               }
             }
           },
