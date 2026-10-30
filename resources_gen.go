@@ -22,11 +22,13 @@ type Service struct {
 	Segments          *SegmentsService
 	Account           *AccountService
 	Team              *TeamService
+	Billing           *BillingService
 	Suppressions      *SuppressionsService
 	Broadcasts        *BroadcastsService
 	Templates         *TemplatesService
 	Domains           *DomainsService
 	APIKeys           *APIKeysService
+	Cli               *CliService
 	Webhooks          *WebhooksService
 	Forms             *FormsService
 	LinkDomains       *LinkDomainsService
@@ -44,11 +46,13 @@ func newService(c *core) *Service {
 		Segments:          newSegmentsService(c),
 		Account:           newAccountService(c),
 		Team:              newTeamService(c),
+		Billing:           newBillingService(c),
 		Suppressions:      newSuppressionsService(c),
 		Broadcasts:        newBroadcastsService(c),
 		Templates:         newTemplatesService(c),
 		Domains:           newDomainsService(c),
 		APIKeys:           newAPIKeysService(c),
+		Cli:               newCliService(c),
 		Webhooks:          newWebhooksService(c),
 		Forms:             newFormsService(c),
 		LinkDomains:       newLinkDomainsService(c),
@@ -314,6 +318,9 @@ func (s *EmailsService) GetMetrics(ctx context.Context, query *GetEmailMetricsQu
 		}
 		if query.BroadcastID != nil {
 			setQuery(q, "broadcast_id", *query.BroadcastID)
+		}
+		if query.Include != nil {
+			setQuery(q, "include", *query.Include)
 		}
 	}
 	out := new(GetEmailMetricsResponse)
@@ -1287,6 +1294,46 @@ func (s *AccountService) Usage(ctx context.Context, opts ...RequestOption) (*Usa
 	return out, nil
 }
 
+// Activation: Whether the account is active (GET /v1/account/activation).
+func (s *AccountService) Activation(ctx context.Context, opts ...RequestOption) (*GetAccountActivationResponse, error) {
+	out := new(GetAccountActivationResponse)
+	err := s.core.do(ctx, "GET", "/v1/account/activation", map[string]string{}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RequestFreeTrial: Ask for the free plan (POST /v1/account/activation/free-trial).
+func (s *AccountService) RequestFreeTrial(ctx context.Context, params *RequestFreeTrialParams, opts ...RequestOption) (*RequestFreeTrialResponse, error) {
+	out := new(RequestFreeTrialResponse)
+	err := s.core.do(ctx, "POST", "/v1/account/activation/free-trial", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RedeemInvite: Activate with an invite code (POST /v1/account/activation/invite).
+func (s *AccountService) RedeemInvite(ctx context.Context, params *RedeemActivationInviteParams, opts ...RequestOption) (*RedeemActivationInviteResponse, error) {
+	out := new(RedeemActivationInviteResponse)
+	err := s.core.do(ctx, "POST", "/v1/account/activation/invite", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ActivationCheckout: Activate with a paid plan (POST /v1/account/activation/checkout).
+func (s *AccountService) ActivationCheckout(ctx context.Context, params *CreateActivationCheckoutParams, opts ...RequestOption) (*CreateActivationCheckoutResponse, error) {
+	out := new(CreateActivationCheckoutResponse)
+	err := s.core.do(ctx, "POST", "/v1/account/activation/checkout", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TeamService groups the team operations.
 type TeamService struct {
 	core    *core
@@ -1392,6 +1439,125 @@ func (s *TeamInvitesService) Revoke(ctx context.Context, id string, opts ...Requ
 		return nil, err
 	}
 	return out, nil
+}
+
+// BillingService groups the billing operations.
+type BillingService struct {
+	core     *core
+	Checkout *BillingCheckoutService
+	Portal   *BillingPortalService
+	Invoices *BillingInvoicesService
+}
+
+func newBillingService(c *core) *BillingService {
+	return &BillingService{
+		core:     c,
+		Checkout: newBillingCheckoutService(c),
+		Portal:   newBillingPortalService(c),
+		Invoices: newBillingInvoicesService(c),
+	}
+}
+
+// Get: Get the plan and usage (GET /v1/billing).
+func (s *BillingService) Get(ctx context.Context, opts ...RequestOption) (*Billing, error) {
+	out := new(Billing)
+	err := s.core.do(ctx, "GET", "/v1/billing", map[string]string{}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BillingCheckoutService groups the billing.checkout operations.
+type BillingCheckoutService struct {
+	core *core
+}
+
+func newBillingCheckoutService(c *core) *BillingCheckoutService {
+	return &BillingCheckoutService{
+		core: c,
+	}
+}
+
+// Create: Get a link to start or change a plan (POST /v1/billing/checkout).
+func (s *BillingCheckoutService) Create(ctx context.Context, params *CreateBillingCheckoutParams, opts ...RequestOption) (*BillingCheckout, error) {
+	out := new(BillingCheckout)
+	err := s.core.do(ctx, "POST", "/v1/billing/checkout", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BillingPortalService groups the billing.portal operations.
+type BillingPortalService struct {
+	core *core
+}
+
+func newBillingPortalService(c *core) *BillingPortalService {
+	return &BillingPortalService{
+		core: c,
+	}
+}
+
+// Create: Get a link to the billing portal (POST /v1/billing/portal).
+func (s *BillingPortalService) Create(ctx context.Context, params *CreateBillingPortalSessionParams, opts ...RequestOption) (*BillingPortalSession, error) {
+	out := new(BillingPortalSession)
+	err := s.core.do(ctx, "POST", "/v1/billing/portal", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BillingInvoicesService groups the billing.invoices operations.
+type BillingInvoicesService struct {
+	core *core
+}
+
+func newBillingInvoicesService(c *core) *BillingInvoicesService {
+	return &BillingInvoicesService{
+		core: c,
+	}
+}
+
+// List: List invoices (GET /v1/billing/invoices).
+func (s *BillingInvoicesService) List(ctx context.Context, query *ListBillingInvoicesQuery, opts ...RequestOption) (*ListBillingInvoicesResponse, error) {
+	q := url.Values{}
+	if query != nil {
+		if query.Limit != nil {
+			setQuery(q, "limit", *query.Limit)
+		}
+		if query.After != nil {
+			setQuery(q, "after", *query.After)
+		}
+		if query.Before != nil {
+			setQuery(q, "before", *query.Before)
+		}
+	}
+	out := new(ListBillingInvoicesResponse)
+	err := s.core.do(ctx, "GET", "/v1/billing/invoices", map[string]string{}, q, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ListAll iterates over every item of List, fetching the following pages as needed.
+func (s *BillingInvoicesService) ListAll(ctx context.Context, query *ListBillingInvoicesQuery, opts ...RequestOption) iter.Seq2[Invoice, error] {
+	q := url.Values{}
+	if query != nil {
+		if query.Limit != nil {
+			setQuery(q, "limit", *query.Limit)
+		}
+		if query.After != nil {
+			setQuery(q, "after", *query.After)
+		}
+		if query.Before != nil {
+			setQuery(q, "before", *query.Before)
+		}
+	}
+	return paginate[Invoice](ctx, s.core, "/v1/billing/invoices", map[string]string{}, q, opts)
 }
 
 // SuppressionsService groups the suppressions operations.
@@ -1958,6 +2124,57 @@ func (s *APIKeysService) Update(ctx context.Context, id string, params *UpdateAP
 func (s *APIKeysService) Revoke(ctx context.Context, id string, opts ...RequestOption) (*RevokeAPIKeyResponse, error) {
 	out := new(RevokeAPIKeyResponse)
 	err := s.core.do(ctx, "DELETE", "/v1/api-keys/{id}", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CliService groups the cli operations.
+type CliService struct {
+	core *core
+}
+
+func newCliService(c *core) *CliService {
+	return &CliService{
+		core: c,
+	}
+}
+
+// CreateDeviceCode: Start a CLI login (POST /v1/cli/device).
+func (s *CliService) CreateDeviceCode(ctx context.Context, params *CreateCliDeviceCodeParams, opts ...RequestOption) (*CreateCliDeviceCodeResponse, error) {
+	out := new(CreateCliDeviceCodeResponse)
+	err := s.core.do(ctx, "POST", "/v1/cli/device", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ExchangeDeviceCode: Collect the CLI login key (POST /v1/cli/token).
+func (s *CliService) ExchangeDeviceCode(ctx context.Context, params *ExchangeCliDeviceCodeParams, opts ...RequestOption) (*ExchangeCliDeviceCodeResponse, error) {
+	out := new(ExchangeCliDeviceCodeResponse)
+	err := s.core.do(ctx, "POST", "/v1/cli/token", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// StartSignup: Start a signup from the CLI (POST /v1/cli/signup).
+func (s *CliService) StartSignup(ctx context.Context, params *StartCliSignupParams, opts ...RequestOption) (*StartCliSignupResponse, error) {
+	out := new(StartCliSignupResponse)
+	err := s.core.do(ctx, "POST", "/v1/cli/signup", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// VerifySignup: Finish a CLI signup with the emailed code (POST /v1/cli/signup/verify).
+func (s *CliService) VerifySignup(ctx context.Context, params *VerifyCliSignupParams, opts ...RequestOption) (*VerifyCliSignupResponse, error) {
+	out := new(VerifyCliSignupResponse)
+	err := s.core.do(ctx, "POST", "/v1/cli/signup/verify", map[string]string{}, nil, params, false, out, opts)
 	if err != nil {
 		return nil, err
 	}

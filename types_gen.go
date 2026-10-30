@@ -80,7 +80,8 @@ type AnalyticsUsage struct {
 	Delivered *int64  `json:"delivered,omitzero"`
 	Bounced   *int64  `json:"bounced,omitzero"`
 	Limit     *int64  `json:"limit,omitzero"`
-	Tier      *string `json:"tier,omitzero"`
+	// Tier: The plan: free, starter, growth or scale.
+	Tier *string `json:"tier,omitzero"`
 }
 
 // AnalyticsWindow: Present when days or domain is passed
@@ -148,6 +149,139 @@ type BatchSendResponseDataItem struct {
 type BatchSendResponseEmailsItem struct {
 	ID     string `json:"id"`
 	Status string `json:"status"`
+}
+
+type Billing struct {
+	Object string `json:"object"`
+	// Plan: free, starter, growth or scale
+	Plan string `json:"plan"`
+	// Interval: How the subscription is billed; null without one
+	Interval *string `json:"interval"`
+	// Status: The Stripe subscription status (active, past_due, unpaid and so on); null without a subscription
+	Status *string `json:"status"`
+	// CurrentPeriodEnd: When the paid plan renews, or ends when it is cancelled
+	CurrentPeriodEnd *string `json:"current_period_end"`
+	// CancelAtPeriodEnd: True when the subscription is cancelled and will not renew
+	CancelAtPeriodEnd bool `json:"cancel_at_period_end"`
+	// CancelAt: When a cancelled subscription ends
+	CancelAt *string `json:"cancel_at"`
+	// ScheduledChange: A smaller plan waiting for the end of the paid period
+	ScheduledChange *BillingScheduledChange `json:"scheduled_change"`
+	// PaymentIssue: The last renewal was not paid. past_due: Stripe is still retrying. unpaid: it stopped.
+	PaymentIssue *BillingPaymentIssue `json:"payment_issue"`
+	// Usage: This month's usage against the plan, the same numbers as GET /v1/usage. The month is the calendar month in UTC, not the billing period.
+	Usage BillingUsage `json:"usage"`
+	// NextTier: The plan above this one, with its price and limits; null on the top plan
+	NextTier *BillingNextTier `json:"next_tier"`
+}
+
+type BillingCheckout struct {
+	Object string `json:"object"`
+	// Action: checkout: a Stripe Checkout page for a first subscription. confirm: the billing page with the change open in its confirmation dialog, for an existing
+	Action   string `json:"action"`
+	URL      string `json:"url"`
+	Plan     string `json:"plan"`
+	Interval string `json:"interval"`
+	// Direction: For confirm. up or same: the prorated difference is charged when the person confirms, and the plan applies once that is paid. down: nothing is charged
+	Direction *string `json:"direction"`
+	// EffectiveAt: When a move down takes effect
+	EffectiveAt *string `json:"effective_at"`
+}
+
+// BillingNextTier: The plan above this one, with its price and limits; null on the top plan
+type BillingNextTier struct {
+	Plan string `json:"plan"`
+	Name string `json:"name"`
+	// Price: In the smallest currency unit (cents)
+	Price BillingNextTierPrice `json:"price"`
+	// Limits: What the plan allows
+	Limits BillingNextTierLimits `json:"limits"`
+}
+
+// BillingNextTierLimits: What the plan allows
+type BillingNextTierLimits struct {
+	// Emails: Emails a month
+	Emails   int64 `json:"emails"`
+	Contacts int64 `json:"contacts"`
+	Segments int64 `json:"segments"`
+	// Broadcasts: Broadcasts a month
+	Broadcasts int64 `json:"broadcasts"`
+	// Domains: Sending domains; null means no cap
+	Domains *int64 `json:"domains"`
+	// Members: People on the team, the owner included
+	Members int64 `json:"members"`
+}
+
+// BillingNextTierPrice: In the smallest currency unit (cents)
+type BillingNextTierPrice struct {
+	Monthly  int64  `json:"monthly"`
+	Yearly   int64  `json:"yearly"`
+	Currency string `json:"currency"`
+}
+
+// BillingPaymentIssue: The last renewal was not paid. past_due: Stripe is still retrying. unpaid: it stopped.
+type BillingPaymentIssue struct {
+	Status string `json:"status"`
+	// PayURL: Stripe's page for the open invoice
+	PayURL *string `json:"pay_url"`
+}
+
+type BillingPortalSession struct {
+	Object string `json:"object"`
+	URL    string `json:"url"`
+}
+
+// BillingScheduledChange: A smaller plan waiting for the end of the paid period
+type BillingScheduledChange struct {
+	Plan        string  `json:"plan"`
+	Interval    *string `json:"interval"`
+	EffectiveAt string  `json:"effective_at"`
+}
+
+// BillingUsage: This month's usage against the plan, the same numbers as GET /v1/usage. The month is the calendar month in UTC, not the billing period.
+type BillingUsage struct {
+	PeriodStart string                 `json:"period_start"`
+	ResetsAt    string                 `json:"resets_at"`
+	Emails      BillingUsageEmails     `json:"emails"`
+	Contacts    BillingUsageContacts   `json:"contacts"`
+	Segments    BillingUsageSegments   `json:"segments"`
+	Broadcasts  BillingUsageBroadcasts `json:"broadcasts"`
+	Domains     BillingUsageDomains    `json:"domains"`
+	// Members: Members plus pending invitations, as the seat limit counts them
+	Members BillingUsageMembers `json:"members"`
+}
+
+type BillingUsageBroadcasts struct {
+	Used  int64 `json:"used"`
+	Limit int64 `json:"limit"`
+}
+
+type BillingUsageContacts struct {
+	Used  int64 `json:"used"`
+	Limit int64 `json:"limit"`
+}
+
+type BillingUsageDomains struct {
+	Used  int64  `json:"used"`
+	Limit *int64 `json:"limit"`
+}
+
+type BillingUsageEmails struct {
+	Used  int64 `json:"used"`
+	Limit int64 `json:"limit"`
+	// Credits: Prepaid email credits, spent after the monthly allowance
+	Credits int64 `json:"credits"`
+}
+
+// BillingUsageMembers: Members plus pending invitations, as the seat limit counts them
+type BillingUsageMembers struct {
+	Used  int64 `json:"used"`
+	Limit int64 `json:"limit"`
+}
+
+type BillingUsageSegments struct {
+	Used  int64 `json:"used"`
+	Limit int64 `json:"limit"`
 }
 
 type Broadcast struct {
@@ -435,8 +569,9 @@ type ContactList struct {
 	// ContactLimit: The plan's contact limit, with any override for the account
 	ContactLimit *int64 `json:"contact_limit,omitzero"`
 	// ContactLimitBase: The plan's contact limit without overrides
-	ContactLimitBase *int64  `json:"contact_limit_base,omitzero"`
-	Tier             *string `json:"tier,omitzero"`
+	ContactLimitBase *int64 `json:"contact_limit_base,omitzero"`
+	// Tier: The plan: free, starter, growth or scale.
+	Tier *string `json:"tier,omitzero"`
 }
 
 // ContactListItem: A contact as lists return it: the summary fields plus properties, segments and the suppression.
@@ -515,6 +650,27 @@ type CreateAPIKeyRequest struct {
 	Scopes []string `json:"scopes,omitzero"`
 }
 
+type CreateActivationCheckoutParams struct {
+	Plan     string  `json:"plan"`
+	Interval *string `json:"interval,omitzero"`
+}
+
+type CreateActivationCheckoutResponse struct {
+	URL string `json:"url"`
+}
+
+type CreateBillingCheckoutParams struct {
+	// Plan: The plan to move to
+	Plan string `json:"plan"`
+	// Interval: Defaults to the subscription's current interval, or monthly without one. Required when the subscription is on a price with no known interval.
+	Interval *string `json:"interval,omitzero"`
+}
+
+type CreateBillingPortalSessionParams struct {
+	// Flow: Open the portal on the page that cancels the subscription
+	Flow *string `json:"flow,omitzero"`
+}
+
 // CreateBroadcastRequest: name is required unless template_id is given.
 type CreateBroadcastRequest struct {
 	Name     *string `json:"name,omitzero"`
@@ -537,6 +693,28 @@ type CreateBroadcastRequest struct {
 	TrackClicks *bool            `json:"track_clicks,omitzero"`
 	// SendOverMinutes: Not in Resend. Spread the send evenly over this many minutes from the send time (or scheduled_at): recipient i of N goes out at start + i * window / N
 	SendOverMinutes Nullable[int64] `json:"send_over_minutes,omitzero"`
+}
+
+type CreateCliDeviceCodeParams struct {
+	// ClientName: Shown on the approval page. Default: SMTPfast CLI
+	ClientName *string `json:"client_name,omitzero"`
+	// Hostname: The machine's name; the key is called "CLI on <hostname> (<date>)"
+	Hostname *string `json:"hostname,omitzero"`
+	// Scopes: Scopes for the key. Default: the default API key scopes. The approver's role caps them: billing scopes are granted only for a team the approver owns.
+	Scopes []string `json:"scopes,omitzero"`
+}
+
+type CreateCliDeviceCodeResponse struct {
+	// DeviceCode: Secret. Send it to POST /v1/cli/token; never show it.
+	DeviceCode string `json:"device_code"`
+	// UserCode: For the person to check or type on the approval page
+	UserCode                string `json:"user_code"`
+	VerificationUri         string `json:"verification_uri"`
+	VerificationUriComplete string `json:"verification_uri_complete"`
+	// ExpiresIn: Seconds until both codes expire
+	ExpiresIn int64 `json:"expires_in"`
+	// Interval: Seconds to wait between polls
+	Interval int64 `json:"interval"`
 }
 
 // CreateContactBatchRequest: Create or update up to 500 contacts, matched by email. Fields sent replace the stored ones; fields left out stay. segment_ids only adds memberships.
@@ -882,7 +1060,7 @@ type Email struct {
 	// Category: Decides which suppressions apply and whether the List-Unsubscribe header went out. marketing unless the email was labelled transactional; broadcasts,
 	Category string `json:"category"`
 	Status   string `json:"status"`
-	// ReplyTo: The Reply-To address the email was sent with, or null.
+	// ReplyTo: The Reply-To address the email was sent with, or the first one when it had several, or null.
 	ReplyTo *string `json:"reply_to"`
 	// Tags: The tags given at send time, as name/value pairs. Empty when none were given.
 	Tags []EmailTagsItem `json:"tags"`
@@ -950,6 +1128,26 @@ type Error struct {
 	Error string `json:"error"`
 }
 
+type ExchangeCliDeviceCodeParams struct {
+	DeviceCode string `json:"device_code"`
+}
+
+type ExchangeCliDeviceCodeResponse struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// Key: The full key. Store it; it cannot be read again.
+	Key       string                            `json:"key"`
+	Prefix    string                            `json:"prefix"`
+	Scopes    []string                          `json:"scopes"`
+	CreatedAt string                            `json:"created_at"`
+	Team      ExchangeCliDeviceCodeResponseTeam `json:"team"`
+}
+
+type ExchangeCliDeviceCodeResponseTeam struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type ExportContactsQuery struct {
 	Format     *string `json:"format,omitzero"`
 	Status     *string `json:"status,omitzero"`
@@ -963,6 +1161,16 @@ type ForwardInboxThreadEmailParams struct {
 	HTML    *string    `json:"html,omitzero"`
 	Text    *string    `json:"text,omitzero"`
 	Subject *string    `json:"subject,omitzero"`
+}
+
+type GetAccountActivationResponse struct {
+	Status        string `json:"status"`
+	Plan          string `json:"plan"`
+	EmailVerified bool   `json:"email_verified"`
+	// FreeTrialRequestedAt: Set once a free-trial request is waiting for review
+	FreeTrialRequestedAt *string `json:"free_trial_requested_at"`
+	// RejectionReason: Why a request was turned down, when it was
+	RejectionReason *string `json:"rejection_reason"`
 }
 
 type GetAnalyticsQuery struct {
@@ -988,6 +1196,7 @@ type GetCapabilitiesResponse struct {
 }
 
 type GetCapabilitiesResponseAccount struct {
+	// Tier: The plan: free, starter, growth or scale.
 	Tier   *string `json:"tier,omitzero"`
 	Status *string `json:"status,omitzero"`
 }
@@ -1035,6 +1244,7 @@ type GetEmailMetricsQuery struct {
 	DomainID    *string `json:"domain_id,omitzero"`
 	EmailID     *string `json:"email_id,omitzero"`
 	BroadcastID *string `json:"broadcast_id,omitzero"`
+	Include     *string `json:"include,omitzero"`
 }
 
 type GetEmailMetricsResponse struct {
@@ -1049,6 +1259,8 @@ type GetEmailMetricsResponse struct {
 	Totals map[string]float64 `json:"totals"`
 	// Data: One row per combination of the requested dimensions, with the requested metrics. Absent when no dimensions are requested.
 	Data []GetEmailMetricsResponseDataItem `json:"data,omitzero"`
+	// Providers: With include=providers: one row per mailbox provider with at least one sent email, most sent first. A recipient domain not classified yet counts as ot
+	Providers []MailboxProviderMetrics `json:"providers,omitzero"`
 }
 
 type GetEmailMetricsResponseDataItem struct {
@@ -1308,6 +1520,22 @@ type InboxThreadListItem struct {
 	Snippet Nullable[string] `json:"snippet,omitzero"`
 }
 
+type Invoice struct {
+	Object    string  `json:"object"`
+	ID        string  `json:"id"`
+	Number    *string `json:"number"`
+	CreatedAt string  `json:"created_at"`
+	// Amount: The invoice total, in the smallest currency unit
+	Amount     int64   `json:"amount"`
+	AmountPaid int64   `json:"amount_paid"`
+	Currency   string  `json:"currency"`
+	Status     *string `json:"status"`
+	// HostedInvoiceURL: Stripe's page for the invoice, where an open one can be paid
+	HostedInvoiceURL *string `json:"hosted_invoice_url"`
+	// InvoicePdf: A link to the PDF
+	InvoicePdf *string `json:"invoice_pdf"`
+}
+
 // LinkDomain: A custom hostname for open tracking, click tracking and unsubscribe links. While it is active, email whose From address is on the same registrable dom
 type LinkDomain struct {
 	Object   string `json:"object"`
@@ -1381,6 +1609,18 @@ type ListAPIKeysResponse struct {
 	Object  string   `json:"object"`
 	HasMore bool     `json:"has_more"`
 	Data    []APIKey `json:"data"`
+}
+
+type ListBillingInvoicesQuery struct {
+	Limit  *int64  `json:"limit,omitzero"`
+	After  *string `json:"after,omitzero"`
+	Before *string `json:"before,omitzero"`
+}
+
+type ListBillingInvoicesResponse struct {
+	Object  string    `json:"object"`
+	HasMore bool      `json:"has_more"`
+	Data    []Invoice `json:"data"`
 }
 
 type ListBroadcastClickedLinksResponse struct {
@@ -1648,6 +1888,32 @@ type LogEventTagsItem struct {
 	Value *string `json:"value,omitzero"`
 }
 
+// MailboxProviderMetrics: Sent email to one mailbox provider. Each email counts once, by the domain of its first To address; a domain outside the consumer domains is classified
+type MailboxProviderMetrics struct {
+	Provider string `json:"provider"`
+	Name     string `json:"name"`
+	// Sent: Handed to SES: sent, delivered, opened, clicked, bounced or complained.
+	Sent int64 `json:"sent"`
+	// Share: Percent of all sent email in the breakdown.
+	Share float64 `json:"share"`
+	// Delivered: Accepted by the receiving server, complained included.
+	Delivered  int64 `json:"delivered"`
+	Bounced    int64 `json:"bounced"`
+	Complained int64 `json:"complained"`
+	// TrackedDelivered: Delivered with open tracking on: the open rate's denominator.
+	TrackedDelivered int64 `json:"tracked_delivered"`
+	// Opened: Of tracked_delivered, opened at least once.
+	Opened int64 `json:"opened"`
+	// DeliveryRate: delivered / (delivered + bounced): over emails with a delivery or bounce report.
+	DeliveryRate *float64 `json:"delivery_rate"`
+	// OpenRate: opened / tracked_delivered. Apple Mail Privacy Protection loads the open pixel before anyone reads the email, so the icloud rate reads high.
+	OpenRate *float64 `json:"open_rate"`
+	// BounceRate: bounced / (delivered + bounced).
+	BounceRate *float64 `json:"bounce_rate"`
+	// ComplaintRate: complained / delivered.
+	ComplaintRate *float64 `json:"complaint_rate"`
+}
+
 type MarkReceivedEmailsParams struct {
 	IDs  []string `json:"ids"`
 	Read bool     `json:"read"`
@@ -1807,6 +2073,15 @@ type ReceivedEmailVerdicts struct {
 	Virus Nullable[string] `json:"virus,omitzero"`
 }
 
+type RedeemActivationInviteParams struct {
+	Code string `json:"code"`
+}
+
+type RedeemActivationInviteResponse struct {
+	Status string `json:"status"`
+	Plan   string `json:"plan"`
+}
+
 type RemovePendingSignupResponse struct {
 	Deleted bool `json:"deleted"`
 }
@@ -1844,6 +2119,18 @@ type ReplyToReceivedEmailParams struct {
 
 type ReplyToReceivedEmailResponse struct {
 	ID *string `json:"id,omitzero"`
+}
+
+type RequestFreeTrialParams struct {
+	UseCase string `json:"use_case"`
+	// Source: How you heard about SMTPfast: one of the options on the activation page, or other
+	Source      *string `json:"source,omitzero"`
+	SourceOther *string `json:"source_other,omitzero"`
+}
+
+type RequestFreeTrialResponse struct {
+	Requested bool   `json:"requested"`
+	Message   string `json:"message"`
 }
 
 type RetryWebhookDeliveryResponse struct {
@@ -1898,7 +2185,8 @@ type SegmentList struct {
 	Data         []SegmentSummary `json:"data"`
 	Total        int64            `json:"total"`
 	SegmentLimit int64            `json:"segment_limit"`
-	Tier         *string          `json:"tier,omitzero"`
+	// Tier: The plan: free, starter, growth or scale.
+	Tier *string `json:"tier,omitzero"`
 }
 
 type SegmentSummary struct {
@@ -1942,7 +2230,7 @@ type SendEmailRequest struct {
 	Cc StringList `json:"cc,omitzero"`
 	// Bcc: Bcc recipients
 	Bcc StringList `json:"bcc,omitzero"`
-	// ReplyTo: Reply-To address or addresses
+	// ReplyTo: Reply-To address or addresses, up to 50. Every address goes in the Reply-To header.
 	ReplyTo StringList `json:"reply_to,omitzero"`
 	// Subject: Email subject line
 	Subject *string `json:"subject,omitzero"`
@@ -2085,6 +2373,24 @@ type SignupFormWelcomeStats struct {
 	Delivered *int64 `json:"delivered,omitzero"`
 	Opened    *int64 `json:"opened,omitzero"`
 	Clicked   *int64 `json:"clicked,omitzero"`
+}
+
+type StartCliSignupParams struct {
+	Email string  `json:"email"`
+	Name  *string `json:"name,omitzero"`
+	// Newsletter: The monthly product update email, as the checkbox on the signup form
+	Newsletter *bool   `json:"newsletter,omitzero"`
+	ClientName *string `json:"client_name,omitzero"`
+	// Hostname: The machine's name; the first API key is called "CLI on <hostname> (<date>)"
+	Hostname *string `json:"hostname,omitzero"`
+}
+
+type StartCliSignupResponse struct {
+	// SignupID: Send it back with the code to POST /v1/cli/signup/verify
+	SignupID   string `json:"signup_id"`
+	Email      string `json:"email"`
+	ExpiresIn  int64  `json:"expires_in"`
+	CodeLength int64  `json:"code_length"`
 }
 
 type Success struct {
@@ -2546,6 +2852,42 @@ type UsageRateLimit struct {
 type UsageSegments struct {
 	Used  int64 `json:"used"`
 	Limit int64 `json:"limit"`
+}
+
+type VerifyCliSignupParams struct {
+	SignupID string `json:"signup_id"`
+	// Code: The 8 digits from the email, with or without the dash
+	Code string `json:"code"`
+}
+
+type VerifyCliSignupResponse struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// Key: The full key. Store it; it cannot be read again.
+	Key        string                            `json:"key"`
+	Prefix     string                            `json:"prefix"`
+	Scopes     []string                          `json:"scopes"`
+	CreatedAt  string                            `json:"created_at"`
+	Team       VerifyCliSignupResponseTeam       `json:"team"`
+	Account    VerifyCliSignupResponseAccount    `json:"account"`
+	Activation VerifyCliSignupResponseActivation `json:"activation"`
+}
+
+type VerifyCliSignupResponseAccount struct {
+	ID     string `json:"id"`
+	Email  string `json:"email"`
+	Status string `json:"status"`
+	Plan   string `json:"plan"`
+}
+
+type VerifyCliSignupResponseActivation struct {
+	Required bool   `json:"required"`
+	Docs     string `json:"docs"`
+}
+
+type VerifyCliSignupResponseTeam struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type VerifyDomainResponse struct {
