@@ -44,6 +44,8 @@ jobs:
           branch: spec-sync
           title: "Sync with the API spec"
           commit-message: "Sync with the API spec"
+          # Otherwise the author is whoever triggered the run, such as the owner of the dispatch token.
+          author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
           body: |
             The published OpenAPI document changed. This regenerates `types_gen.go` and `resources_gen.go` from it.
             Review the diff of `spec/openapi.json` for what changed in the API.
