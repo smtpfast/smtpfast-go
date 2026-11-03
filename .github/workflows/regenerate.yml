@@ -37,7 +37,7 @@ jobs:
       # A pull request opened with the default GITHUB_TOKEN does not start the
       # CI workflow. Set SDK_BOT_TOKEN (a GitHub App or fine-grained token with
       # contents and pull-requests write) so it does.
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         if: steps.names.outputs.ok == 'true'
         with:
           token: ${{ secrets.SDK_BOT_TOKEN || github.token }}
