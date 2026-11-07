@@ -686,11 +686,13 @@ type CreateBroadcastRequest struct {
 	Subject     *string          `json:"subject,omitzero"`
 	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Markdown: Markdown body. Must include {{unsubscribe_url}} or {{{RESEND_UNSUBSCRIBE_URL}}} before sending.
-	Markdown    *string          `json:"markdown,omitzero"`
-	HTML        Nullable[string] `json:"html,omitzero"`
-	Text        Nullable[string] `json:"text,omitzero"`
-	TrackOpens  *bool            `json:"track_opens,omitzero"`
-	TrackClicks *bool            `json:"track_clicks,omitzero"`
+	Markdown *string          `json:"markdown,omitzero"`
+	HTML     Nullable[string] `json:"html,omitzero"`
+	Text     Nullable[string] `json:"text,omitzero"`
+	// TrackOpens: Add the open-tracking pixel to each email. Available on every plan.
+	TrackOpens *bool `json:"track_opens,omitzero"`
+	// TrackClicks: Send each link through the click tracker. Available on every plan.
+	TrackClicks *bool `json:"track_clicks,omitzero"`
 	// SendOverMinutes: Not in Resend. Spread the send evenly over this many minutes from the send time (or scheduled_at): recipient i of N goes out at start + i * window / N
 	SendOverMinutes Nullable[int64] `json:"send_over_minutes,omitzero"`
 }
@@ -895,7 +897,7 @@ type CreateTemplateRequest struct {
 }
 
 type CreateWebhookRequest struct {
-	// URL: The URL that will receive webhook POST requests
+	// URL: The URL that will receive webhook POST requests: HTTPS on the standard port (443) of a public host
 	URL string `json:"url"`
 	// Events: List of event types to subscribe to. Legacy unprefixed email aliases are accepted and normalized to Resend-style email.* event names.
 	Events []string `json:"events"`
@@ -2686,11 +2688,13 @@ type UpdateBroadcastRequest struct {
 	Subject     *string          `json:"subject,omitzero"`
 	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Markdown: Markdown body. Must include {{unsubscribe_url}} or {{{RESEND_UNSUBSCRIBE_URL}}} before sending.
-	Markdown    *string          `json:"markdown,omitzero"`
-	HTML        Nullable[string] `json:"html,omitzero"`
-	Text        Nullable[string] `json:"text,omitzero"`
-	TrackOpens  *bool            `json:"track_opens,omitzero"`
-	TrackClicks *bool            `json:"track_clicks,omitzero"`
+	Markdown *string          `json:"markdown,omitzero"`
+	HTML     Nullable[string] `json:"html,omitzero"`
+	Text     Nullable[string] `json:"text,omitzero"`
+	// TrackOpens: Add the open-tracking pixel to each email. Available on every plan.
+	TrackOpens *bool `json:"track_opens,omitzero"`
+	// TrackClicks: Send each link through the click tracker. Available on every plan.
+	TrackClicks *bool `json:"track_clicks,omitzero"`
 	// SendOverMinutes: Not in Resend. Spread the send evenly over this many minutes from the send time (or scheduled_at): recipient i of N goes out at start + i * window / N
 	SendOverMinutes Nullable[int64] `json:"send_over_minutes,omitzero"`
 }
@@ -2863,6 +2867,7 @@ type UpdateTemplateRequest struct {
 }
 
 type UpdateWebhookRequest struct {
+	// URL: HTTPS on the standard port (443) of a public host
 	URL *string `json:"url,omitzero"`
 	// Events: List of event types to subscribe to. Legacy unprefixed email aliases are accepted and normalized to Resend-style email.* event names.
 	Events []string `json:"events,omitzero"`
