@@ -46,7 +46,8 @@ type Analytics struct {
 	// ThisWeek: Emails sent in the last 7 days
 	ThisWeek *int64 `json:"thisWeek,omitzero"`
 	// Delivered: Accepted by the receiving server, including those later opened or clicked
-	Delivered  *int64 `json:"delivered,omitzero"`
+	Delivered *int64 `json:"delivered,omitzero"`
+	// Bounced: Emails with status bounced, hard or soft, all time
 	Bounced    *int64 `json:"bounced,omitzero"`
 	Complained *int64 `json:"complained,omitzero"`
 	// Failed: Never sent because of an error
@@ -58,13 +59,33 @@ type Analytics struct {
 	AwaitingReport *int64 `json:"awaitingReport,omitzero"`
 	// DeliveryRate: (delivered + complained) / (sent - awaitingReport), as a percentage
 	DeliveryRate *float64 `json:"deliveryRate,omitzero"`
-	// BounceRate: bounced / (sent - awaitingReport), as a percentage
+	// BounceRate: Hard bounce rate over the last 30 days, as a percentage: the same as bounces.hardRate. Hard bounces only, as SES counts them; soft bounces are in boun
 	BounceRate *float64 `json:"bounceRate,omitzero"`
+	// Bounces: Bounces over a rolling window (the last 30 days), counted by when each email was sent. A hard bounce is one SES marked Permanent or Undetermined: the
+	Bounces *AnalyticsBounces `json:"bounces,omitzero"`
 	// Daily: Last 30 days, bucketed by the UTC day each email was sent
 	Daily []AnalyticsDailyItem `json:"daily,omitzero"`
 	Usage *AnalyticsUsage      `json:"usage,omitzero"`
 	// Window: Present when days or domain is passed
 	Window *AnalyticsWindow `json:"window,omitzero"`
+}
+
+// AnalyticsBounces: Bounces over a rolling window (the last 30 days), counted by when each email was sent. A hard bounce is one SES marked Permanent or Undetermined: the
+type AnalyticsBounces struct {
+	// Days: Window length in days
+	Days *int64 `json:"days,omitzero"`
+	// From: Start of the window
+	From *string `json:"from,omitzero"`
+	// Reported: Emails sent in the window with a delivery or bounce report: the rates are over this
+	Reported *int64 `json:"reported,omitzero"`
+	// Hard: Hard-bounced emails sent in the window
+	Hard *int64 `json:"hard,omitzero"`
+	// Soft: Soft-bounced emails sent in the window
+	Soft *int64 `json:"soft,omitzero"`
+	// HardRate: hard / reported, as a percentage
+	HardRate *float64 `json:"hardRate,omitzero"`
+	// SoftRate: soft / reported, as a percentage
+	SoftRate *float64 `json:"softRate,omitzero"`
 }
 
 type AnalyticsDailyItem struct {
@@ -96,9 +117,11 @@ type AnalyticsWindow struct {
 }
 
 type AnalyticsWindowCounts struct {
-	Sent        *int64 `json:"sent,omitzero"`
-	Delivered   *int64 `json:"delivered,omitzero"`
+	Sent      *int64 `json:"sent,omitzero"`
+	Delivered *int64 `json:"delivered,omitzero"`
+	// HardBounced: Bounce events SES marked Permanent or Undetermined, not counting refusals by the SES account-level suppression list
 	HardBounced *int64 `json:"hard_bounced,omitzero"`
+	// SoftBounced: Bounce events SES marked Transient
 	SoftBounced *int64 `json:"soft_bounced,omitzero"`
 	Complained  *int64 `json:"complained,omitzero"`
 	Failed      *int64 `json:"failed,omitzero"`
@@ -140,6 +163,8 @@ type BatchSendResponse struct {
 	Emails []BatchSendResponseEmailsItem `json:"emails"`
 	// Data: The same ids in Resend's batch response shape: one { id } per item, in request order.
 	Data []BatchSendResponseDataItem `json:"data"`
+	// Warnings: Present only when there is something to check. category_not_set lists in items the emails sent without a category, which went out as marketing.
+	Warnings []SendWarning `json:"warnings,omitzero"`
 }
 
 type BatchSendResponseDataItem struct {
@@ -396,13 +421,18 @@ type BroadcastMetrics struct {
 	Queued  *int64 `json:"queued,omitzero"`
 	Sending *int64 `json:"sending,omitzero"`
 	// HandedOff: Recipients whose email the provider accepted, whatever happened next. Shows how far a send spread over send_over_minutes has got.
-	HandedOff       *int64   `json:"handed_off,omitzero"`
-	Sent            *int64   `json:"sent,omitzero"`
-	Delivered       *int64   `json:"delivered,omitzero"`
-	Opened          *int64   `json:"opened,omitzero"`
-	Clicked         *int64   `json:"clicked,omitzero"`
-	Unsubscribed    *int64   `json:"unsubscribed,omitzero"`
-	Bounced         *int64   `json:"bounced,omitzero"`
+	HandedOff    *int64 `json:"handed_off,omitzero"`
+	Sent         *int64 `json:"sent,omitzero"`
+	Delivered    *int64 `json:"delivered,omitzero"`
+	Opened       *int64 `json:"opened,omitzero"`
+	Clicked      *int64 `json:"clicked,omitzero"`
+	Unsubscribed *int64 `json:"unsubscribed,omitzero"`
+	// Bounced: Every bounce, hard plus soft.
+	Bounced *int64 `json:"bounced,omitzero"`
+	// HardBounced: Bounces SES marked Permanent or Undetermined: the address does not exist or does not take mail.
+	HardBounced *int64 `json:"hard_bounced,omitzero"`
+	// SoftBounced: Bounces SES marked Transient: a temporary failure such as a full mailbox.
+	SoftBounced     *int64   `json:"soft_bounced,omitzero"`
 	Complained      *int64   `json:"complained,omitzero"`
 	Failed          *int64   `json:"failed,omitzero"`
 	Canceled        *int64   `json:"canceled,omitzero"`
@@ -410,7 +440,12 @@ type BroadcastMetrics struct {
 	OpenRate        *float64 `json:"open_rate,omitzero"`
 	ClickRate       *float64 `json:"click_rate,omitzero"`
 	UnsubscribeRate *float64 `json:"unsubscribe_rate,omitzero"`
-	BounceRate      *float64 `json:"bounce_rate,omitzero"`
+	// BounceRate: Hard bounces only, as SES counts them: the same as hard_bounce_rate. Percent of recipients not skipped.
+	BounceRate *float64 `json:"bounce_rate,omitzero"`
+	// HardBounceRate: hard_bounced as a percent of recipients not skipped.
+	HardBounceRate *float64 `json:"hard_bounce_rate,omitzero"`
+	// SoftBounceRate: soft_bounced as a percent of recipients not skipped. Not part of bounce_rate.
+	SoftBounceRate *float64 `json:"soft_bounce_rate,omitzero"`
 }
 
 type BroadcastRecipientDetail struct {
@@ -686,9 +721,10 @@ type CreateBroadcastRequest struct {
 	Subject     *string          `json:"subject,omitzero"`
 	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Markdown: Markdown body. Must include {{unsubscribe_url}} or {{{RESEND_UNSUBSCRIBE_URL}}} before sending.
-	Markdown *string          `json:"markdown,omitzero"`
-	HTML     Nullable[string] `json:"html,omitzero"`
-	Text     Nullable[string] `json:"text,omitzero"`
+	Markdown *string `json:"markdown,omitzero"`
+	// HTML: HTML body, at most 100,000 characters. HTML with merge tags is parsed to place each value, so it must stay within 131,072 characters, 10,000 tags, 300
+	HTML Nullable[string] `json:"html,omitzero"`
+	Text Nullable[string] `json:"text,omitzero"`
 	// TrackOpens: Add the open-tracking pixel to each email. Available on every plan.
 	TrackOpens *bool `json:"track_opens,omitzero"`
 	// TrackClicks: Send each link through the click tracker. Available on every plan.
@@ -883,7 +919,7 @@ type CreateTemplateRequest struct {
 	Subject Nullable[string] `json:"subject,omitzero"`
 	// ReplyTo: Default Reply-To address or addresses. A send can override it.
 	ReplyTo Nullable[StringList] `json:"reply_to,omitzero"`
-	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}.
+	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}. HTML with merge tags is parsed to place each va
 	HTML *string `json:"html,omitzero"`
 	// Text: Plain-text body. When left out, the text part is generated from the HTML at send time. Exactly "" stops that, as in Resend; the email then carries an
 	Text Nullable[string] `json:"text,omitzero"`
@@ -981,8 +1017,10 @@ type Domain struct {
 	Domain string `json:"domain"`
 	// Name: Same as domain. Resend calls this field name.
 	Name *string `json:"name,omitzero"`
-	// Status: GET /v1/domains/{id} answers pending for a verified domain whose required records are no longer live.
+	// Status: The stored status, which gates sending: verified once DKIM and the email provider identity are verified. POST /v1/domains/{id}/verify and the backgrou
 	Status string `json:"status"`
+	// DNSLive: GET /v1/domains/{id} only. True when every required record (DKIM, SPF, DMARC, MAIL FROM) matches a live lookup at the domain's own nameservers. A veri
+	DNSLive *bool `json:"dns_live,omitzero"`
 	// Receiving: Inbound email for the domain
 	Receiving           *DomainReceiving `json:"receiving,omitzero"`
 	VerificationPhase   *string          `json:"verification_phase,omitzero"`
@@ -1983,9 +2021,14 @@ type MailboxProviderMetrics struct {
 	// Share: Percent of all sent email in the breakdown.
 	Share float64 `json:"share"`
 	// Delivered: Accepted by the receiving server, complained included.
-	Delivered  int64 `json:"delivered"`
-	Bounced    int64 `json:"bounced"`
-	Complained int64 `json:"complained"`
+	Delivered int64 `json:"delivered"`
+	// Bounced: Every bounce, hard plus soft.
+	Bounced int64 `json:"bounced"`
+	// HardBounced: Bounces SES marked Permanent or Undetermined.
+	HardBounced *int64 `json:"hard_bounced,omitzero"`
+	// SoftBounced: Bounces SES marked Transient, such as a full mailbox.
+	SoftBounced *int64 `json:"soft_bounced,omitzero"`
+	Complained  int64  `json:"complained"`
 	// TrackedDelivered: Delivered with open tracking on: the open rate's denominator.
 	TrackedDelivered int64 `json:"tracked_delivered"`
 	// Opened: Of tracked_delivered, opened at least once.
@@ -1994,8 +2037,10 @@ type MailboxProviderMetrics struct {
 	DeliveryRate *float64 `json:"delivery_rate"`
 	// OpenRate: opened / tracked_delivered. Apple Mail Privacy Protection loads the open pixel before anyone reads the email, so the icloud rate reads high.
 	OpenRate *float64 `json:"open_rate"`
-	// BounceRate: bounced / (delivered + bounced).
+	// BounceRate: hard_bounced / (delivered + bounced): hard bounces only, as SES counts them.
 	BounceRate *float64 `json:"bounce_rate"`
+	// SoftBounceRate: soft_bounced / (delivered + bounced). Not part of bounce_rate.
+	SoftBounceRate Nullable[float64] `json:"soft_bounce_rate,omitzero"`
 	// ComplaintRate: complained / delivered.
 	ComplaintRate *float64 `json:"complaint_rate"`
 }
@@ -2347,7 +2392,7 @@ type SendEmailRequest struct {
 	TrackOpens *bool `json:"track_opens,omitzero"`
 	// HTML: HTML body of the email. Include `{{unsubscribe_url}}` (or the Resend-compatible `{{{RESEND_UNSUBSCRIBE_URL}}}`) anywhere in the body and SMTPfast subs
 	HTML *string `json:"html,omitzero"`
-	// Text: Plain text fallback body. Supports the same `{{unsubscribe_url}}` placeholder as the HTML body.
+	// Text: Plain text fallback body. Supports the same `{{unsubscribe_url}}` placeholder as the HTML body. When left out, a text part is generated from the html:
 	Text *string `json:"text,omitzero"`
 }
 
@@ -2378,6 +2423,8 @@ type SendEmailRequestTemplate struct {
 // SendEmailResponse: The id of the accepted email, as Resend returns it. Fetch the email with GET /v1/emails/{id}.
 type SendEmailResponse struct {
 	ID string `json:"id"`
+	// Warnings: Not in Resend. Present only when the send was accepted with something to check. category_not_set: the request had no category (and no X-SMTPfast-Categ
+	Warnings []SendWarning `json:"warnings,omitzero"`
 }
 
 type SendInboxDraftParams struct {
@@ -2394,6 +2441,13 @@ type SendInboxDraftResponse struct {
 	SentRevision *int64 `json:"sent_revision,omitzero"`
 	// Warning: Present when the email went out but the draft changed or was claimed again while the send ran, so it was not marked sent. Not in Resend.
 	Warning *string `json:"warning,omitzero"`
+}
+
+type SendWarning struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	// Items: Batch sends only: the indexes of the items the warning is about, in request order.
+	Items []int64 `json:"items,omitzero"`
 }
 
 type ShareEmailParams struct {
@@ -2667,13 +2721,6 @@ type UpdateAPIKeyParams struct {
 	Scopes []string `json:"scopes,omitzero"`
 }
 
-type UpdateAPIKeyResponse struct {
-	ID        *string  `json:"id,omitzero"`
-	Name      *string  `json:"name,omitzero"`
-	KeyPrefix *string  `json:"keyPrefix,omitzero"`
-	Scopes    []string `json:"scopes,omitzero"`
-}
-
 type UpdateBroadcastRequest struct {
 	Name     *string `json:"name,omitzero"`
 	Audience *string `json:"audience,omitzero"`
@@ -2688,9 +2735,10 @@ type UpdateBroadcastRequest struct {
 	Subject     *string          `json:"subject,omitzero"`
 	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Markdown: Markdown body. Must include {{unsubscribe_url}} or {{{RESEND_UNSUBSCRIBE_URL}}} before sending.
-	Markdown *string          `json:"markdown,omitzero"`
-	HTML     Nullable[string] `json:"html,omitzero"`
-	Text     Nullable[string] `json:"text,omitzero"`
+	Markdown *string `json:"markdown,omitzero"`
+	// HTML: HTML body, at most 100,000 characters. HTML with merge tags is parsed to place each value, so it must stay within 131,072 characters, 10,000 tags, 300
+	HTML Nullable[string] `json:"html,omitzero"`
+	Text Nullable[string] `json:"text,omitzero"`
 	// TrackOpens: Add the open-tracking pixel to each email. Available on every plan.
 	TrackOpens *bool `json:"track_opens,omitzero"`
 	// TrackClicks: Send each link through the click tracker. Available on every plan.
@@ -2851,7 +2899,7 @@ type UpdateTemplateRequest struct {
 	Subject Nullable[string] `json:"subject,omitzero"`
 	// ReplyTo: Default Reply-To address or addresses. A send can override it.
 	ReplyTo Nullable[StringList] `json:"reply_to,omitzero"`
-	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}.
+	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}. HTML with merge tags is parsed to place each va
 	HTML Nullable[string] `json:"html,omitzero"`
 	// Text: Plain-text body. When left out, the text part is generated from the HTML at send time. Exactly "" stops that, as in Resend; the email then carries an
 	Text Nullable[string] `json:"text,omitzero"`
