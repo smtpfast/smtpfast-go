@@ -2206,8 +2206,8 @@ func (s *APIKeysService) Create(ctx context.Context, params *CreateAPIKeyRequest
 }
 
 // Update: Update API key (PATCH /v1/api-keys/{id}).
-func (s *APIKeysService) Update(ctx context.Context, id string, params *UpdateAPIKeyParams, opts ...RequestOption) (*UpdateAPIKeyResponse, error) {
-	out := new(UpdateAPIKeyResponse)
+func (s *APIKeysService) Update(ctx context.Context, id string, params *UpdateAPIKeyParams, opts ...RequestOption) (*APIKey, error) {
+	out := new(APIKey)
 	err := s.core.do(ctx, "PATCH", "/v1/api-keys/{id}", map[string]string{"id": id}, nil, params, false, out, opts)
 	if err != nil {
 		return nil, err
