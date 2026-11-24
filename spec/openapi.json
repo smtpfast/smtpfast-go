@@ -407,6 +407,26 @@
               }
             }
           },
+          "413": {
+            "description": "Payload too large - over a size limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The request is well formed but cannot be carried out in the current state, for example an unpublished template",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
             "content": {
@@ -438,7 +458,7 @@
       "post": {
         "operationId": "sendEmailBatch",
         "summary": "Send a batch of emails",
-        "description": "Queue up to 100 emails in a single request. The body is a JSON array of email objects, each using the same shape as the single-send endpoint. Validation runs on every item before any are queued \u2014 a malformed item rejects the whole batch with 400. Suppressed recipients (to, cc and bcc) are dropped per row; a row left with no deliverable To recipient is recorded with status \"failed\". The batch is accepted whole or not at all: every email is recorded and queued, or none is, so there is no partial success to reconcile. A 4xx means nothing was queued. After a 5xx or a lost response, retry with the same Idempotency-Key: you get the first answer if the batch was accepted, or a fresh attempt if it was not.",
+        "description": "Queue up to 100 emails in a single request. The body is a JSON array of email objects, each using the same shape as the single-send endpoint, attachments included. Validation runs on every item before any are queued: a malformed item rejects the whole batch with 400. Each item's attachments get the checks of POST /v1/emails (413 over a size limit, 422 for a file type Amazon SES blocks), and the error names the item by its index; all the attachments in one batch together can be at most 25 MB (413). Suppressed recipients (to, cc and bcc) are dropped per row; a row left with no deliverable To recipient is recorded with status \"failed\". The batch is accepted whole or not at all: every email is recorded and queued, or none is, so there is no partial success to reconcile. A 4xx means nothing was queued. After a 5xx or a lost response, retry with the same Idempotency-Key: you get the first answer if the batch was accepted, or a fresh attempt if it was not.",
         "tags": [
           "Emails"
         ],
@@ -507,6 +527,16 @@
           },
           "409": {
             "description": "Conflict - the resource already exists or changed meanwhile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload too large - over a size limit",
             "content": {
               "application/json": {
                 "schema": {
@@ -993,7 +1023,7 @@
       "get": {
         "operationId": "getEmailMetrics",
         "summary": "Retrieve email metrics",
-        "description": "Resend-compatible counts and rates over a date range, for transactional and broadcast email together. Leave dimensions out for one totals row; add period, domain, email or broadcast (email and broadcast cannot be combined) to break the numbers down. Each lifecycle timestamp counts in its own period. Sends where every recipient is the SES mailbox simulator are left out. Rates are percentages with one decimal. Open and click metrics need tracking on. Add include=providers for a breakdown by mailbox provider (Gmail, Outlook, iCloud, Yahoo, Proton, other). Requires the email:read scope.",
+        "description": "Resend-compatible counts and rates over a date range, for transactional and broadcast email together. Leave dimensions out for one totals row; add period, domain, email or broadcast (email and broadcast cannot be combined) to break the numbers down. Each lifecycle timestamp counts in its own period: sent by when the email was sent, bounced by when it bounced, and so on. Ranges are calendar dates in timezone (UTC by default), so the default \"last 7 days\" starts at midnight six days ago, while GET /v1/analytics?days=7 is a rolling 7 x 24 hours ending now; the two can disagree. Sends where every recipient is the SES mailbox simulator are left out. Rates are percentages with one decimal. bounce_rate counts hard bounces only, as SES does (bounced_hard: permanent plus undetermined); bounced_soft and soft_bounce_rate count transient bounces such as a full mailbox, and bounced counts both. Open and click metrics need tracking on. Add include=providers for a breakdown by mailbox provider (Gmail, Outlook, iCloud, Yahoo, Proton, other). Requires the email:read scope.",
         "tags": [
           "Emails"
         ],
@@ -1001,7 +1031,7 @@
           {
             "name": "start_date",
             "in": "query",
-            "description": "ISO 8601 date or datetime. A date means midnight in timezone. Defaults to 6 days before end_date.",
+            "description": "ISO 8601 date or datetime; a bare date means midnight in timezone (UTC by default), so start_date=2026-11-17 starts at 2026-11-17T00:00:00Z, not 7 x 24 hours before now. Default: midnight, in timezone, of the day six days before the last day in range, so with no dates the range is today so far plus the six whole days before it. For a rolling window that ends now, pass a datetime or use GET /v1/analytics?days=N.",
             "schema": {
               "type": "string"
             }
@@ -1009,7 +1039,7 @@
           {
             "name": "end_date",
             "in": "query",
-            "description": "ISO 8601 date (the whole day is included) or datetime. Future values are clamped to now. Defaults to now.",
+            "description": "ISO 8601 date or datetime; a bare date includes that whole day (up to the next midnight in timezone). Future values are clamped to now. Defaults to now. The range is start inclusive, end exclusive.",
             "schema": {
               "type": "string"
             }
@@ -1017,7 +1047,7 @@
           {
             "name": "timezone",
             "in": "query",
-            "description": "IANA time zone for dates and periods, e.g. America/New_York. Default UTC.",
+            "description": "IANA time zone for bare dates and periods, e.g. America/New_York. Default UTC.",
             "schema": {
               "type": "string"
             }
@@ -1114,11 +1144,13 @@
                     },
                     "start_date": {
                       "type": "string",
-                      "format": "date-time"
+                      "format": "date-time",
+                      "description": "The resolved start of the range, as a UTC instant (inclusive)"
                     },
                     "end_date": {
                       "type": "string",
-                      "format": "date-time"
+                      "format": "date-time",
+                      "description": "The resolved end of the range, as a UTC instant (exclusive)"
                     },
                     "timezone": {
                       "type": "string",
@@ -6987,6 +7019,14 @@
             }
           },
           {
+            "name": "topic_id",
+            "in": "query",
+            "description": "Not in Resend. Only contacts subscribed to this topic: their own opt-in, or the topic default when they never chose. Combine with status=subscribed for the contacts a topic broadcast can reach.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "description": "Number of contacts to return",
@@ -8830,7 +8870,7 @@
       "patch": {
         "operationId": "updateTeamMember",
         "summary": "Change a member's role or billing access",
-        "description": "Send role, can_manage_billing, or both. Owners and admins can change roles under the same rules as the Members page (an admin cannot touch an owner, a team keeps at least one owner). The owner who pays for a team with several owners keeps the owner role until they transfer ownership: changing it answers 409. Only an owner can change billing access. The member gets an email when their role changes. Requires the team:manage scope.",
+        "description": "Send role, can_manage_billing, or both. Owners and admins can change roles under the same rules as the Members page (an admin cannot touch an owner, a team keeps at least one owner). The owner who pays for a team with several owners keeps the owner role until they transfer ownership: changing it answers 409. Only an owner can change billing access. The member gets an email when their role changes. Requires the team:manage scope. Called with an API key, the member must be within the key's own access: every live key and connected app of the member has only scopes the calling key has, and the member is not an owner. A key never makes someone an admin or an owner. The dashboard is not limited this way.",
         "tags": [
           "Team"
         ],
@@ -8901,11 +8941,37 @@
             }
           },
           "403": {
-            "description": "Forbidden - domain not verified or insufficient permissions",
+            "description": "Forbidden. The caller may not change this member: their role does not allow it, or the calling API key reaches past its own access. code key_out_of_reach (scopes names what the member's keys have beyond the calling key; empty for an owner, or for a role above member), key_revoked or missing_scope (the calling key was revoked or lost team:manage while the request waited).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "An API key can only remove or change members whose keys have no more access than itself. That member's keys also have: apikey:manage. Do this in the dashboard."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "key_out_of_reach",
+                        "key_revoked",
+                        "missing_scope"
+                      ]
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "apikey:manage"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -8960,7 +9026,7 @@
       "delete": {
         "operationId": "removeTeamMember",
         "summary": "Remove a member",
-        "description": "Removes the person from the team and revokes their API keys for it. Team resources stay. You cannot remove yourself this way, and the last owner cannot be removed. The owner who pays for the team cannot be removed until they transfer ownership (409). Owner or admin only; requires the team:manage scope.",
+        "description": "Removes the person from the team and revokes their API keys for it. Team resources stay. You cannot remove yourself this way, and the last owner cannot be removed. The owner who pays for the team cannot be removed until they transfer ownership (409). Owner or admin only; requires the team:manage scope. Called with an API key, the member must be within the key's own access: every live key and connected app of the member has only scopes the calling key has, and the member is not an owner. A key never makes someone an admin or an owner. The dashboard is not limited this way.",
         "tags": [
           "Team"
         ],
@@ -9008,11 +9074,37 @@
             }
           },
           "403": {
-            "description": "Forbidden - domain not verified or insufficient permissions",
+            "description": "Forbidden. The caller may not change this member: their role does not allow it, or the calling API key reaches past its own access. code key_out_of_reach (scopes names what the member's keys have beyond the calling key; empty for an owner, or for a role above member), key_revoked or missing_scope (the calling key was revoked or lost team:manage while the request waited).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "An API key can only remove or change members whose keys have no more access than itself. That member's keys also have: apikey:manage. Do this in the dashboard."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "key_out_of_reach",
+                        "key_revoked",
+                        "missing_scope"
+                      ]
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "apikey:manage"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -9156,7 +9248,7 @@
       "post": {
         "operationId": "createTeamInvite",
         "summary": "Invite someone to the team",
-        "description": "Emails an invitation link that is valid for 7 days. The person signs in with the invited address to accept. Inviting the same address again sends a fresh link. Needs a paid plan and a free seat. Limited to 20 invitations an hour per inviter and 3 an hour per address. Owner or admin only; requires the team:manage scope.",
+        "description": "Emails an invitation link that is valid for 7 days. The person signs in with the invited address to accept. Inviting the same address again sends a fresh link. Needs a paid plan and a free seat. Limited to 20 invitations an hour per inviter and 3 an hour per address. Owner or admin only; requires the team:manage scope. An API key can only invite members (403 key_out_of_reach for an admin); invite admins in the dashboard.",
         "tags": [
           "Team"
         ],
@@ -9219,11 +9311,37 @@
             }
           },
           "403": {
-            "description": "Forbidden - domain not verified or insufficient permissions",
+            "description": "Forbidden. The caller is not an owner or admin, the plan has no free seat, or an API key asked for an admin (code key_out_of_reach).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "An API key can only remove or change members whose keys have no more access than itself. That member's keys also have: apikey:manage. Do this in the dashboard."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "key_out_of_reach",
+                        "key_revoked",
+                        "missing_scope"
+                      ]
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "apikey:manage"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -10204,6 +10322,671 @@
           "segments"
         ],
         "x-sdk-method": "remove"
+      }
+    },
+    "/v1/contacts/{id}/topics": {
+      "get": {
+        "operationId": "listContactTopics",
+        "summary": "List a contact's topics",
+        "description": "Every topic of the team with this contact's subscription: their own choice, or the topic default when they never chose (source and updated_at are null then). The contact can be named by id or email address. Resend-compatible. Requires the contact:read scope.",
+        "tags": [
+          "Contacts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The contact ID or email address",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The contact's topics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactTopicList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "contacts",
+          "topics"
+        ],
+        "x-sdk-method": "list"
+      },
+      "patch": {
+        "operationId": "updateContactTopics",
+        "summary": "Update a contact's topics",
+        "description": "Opt the contact in to or out of topics. Topics not named keep what they had. An opt-in never overrides an unsubscribe from everything or a suppression. The body can also be the bare array, as in Resend's cURL example. Resend-compatible. Requires the contact:write scope.",
+        "tags": [
+          "Contacts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The contact ID or email address",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContactTopicsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "object",
+                    "id"
+                  ],
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "example": "contact_topics"
+                    },
+                    "id": {
+                      "type": "string",
+                      "description": "The contact ID"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - check your payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "contacts",
+          "topics"
+        ],
+        "x-sdk-method": "update"
+      }
+    },
+    "/v1/topics": {
+      "get": {
+        "operationId": "listTopics",
+        "summary": "List topics",
+        "description": "Every topic of the team, oldest first. Resend-compatible. Requires the contact:read scope.",
+        "tags": [
+          "Contacts"
+        ],
+        "responses": {
+          "200": {
+            "description": "The topics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "topics"
+        ],
+        "x-sdk-method": "list"
+      },
+      "post": {
+        "operationId": "createTopic",
+        "summary": "Create a topic",
+        "description": "Resend-compatible. default_subscription is the subscription of a contact that never chose: opt_in means every contact gets the topic's broadcasts unless they opt out; opt_out means nobody does unless they opt in. It cannot be changed later. Set subscribe_existing_contacts (not in Resend) on an opt_out topic to opt in every contact who is subscribed and not suppressed now. Requires the contact:write scope.",
+        "tags": [
+          "Contacts"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTopicRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Topic created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - check your payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - the resource already exists or changed meanwhile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "topics"
+        ],
+        "x-sdk-method": "create"
+      }
+    },
+    "/v1/topics/{id}": {
+      "get": {
+        "operationId": "getTopic",
+        "summary": "Retrieve a topic",
+        "description": "Resend-compatible. Requires the contact:read scope.",
+        "tags": [
+          "Contacts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The topic ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The topic",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "topics"
+        ],
+        "x-sdk-method": "get"
+      },
+      "patch": {
+        "operationId": "updateTopic",
+        "summary": "Update a topic",
+        "description": "Change the name, description or visibility. Only the fields sent change; default_subscription cannot be changed. Resend-compatible. Requires the contact:write scope.",
+        "tags": [
+          "Contacts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The topic ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTopicRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Topic updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - check your payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - the resource already exists or changed meanwhile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "topics"
+        ],
+        "x-sdk-method": "update"
+      },
+      "delete": {
+        "operationId": "deleteTopic",
+        "summary": "Delete a topic",
+        "description": "Delete a topic and every contact's choice about it. A topic that a form signs people up to, or that a broadcast not yet sent belongs to, cannot be deleted (409); sent broadcasts lose the label. Requires the contact:write scope.",
+        "tags": [
+          "Contacts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The topic ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Topic deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedObject"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - domain not verified or insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - the resource already exists or changed meanwhile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded - retry after the period indicated in the Retry-After header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-sdk-group": [
+          "topics"
+        ],
+        "x-sdk-method": "delete"
       }
     },
     "/v1/suppressions/batch/add": {
@@ -11255,7 +12038,7 @@
       "get": {
         "operationId": "getBroadcastAudience",
         "summary": "Preview a broadcast audience",
-        "description": "How many contacts a broadcast to all contacts, or to one segment, would reach after unsubscribes, suppressions and invalid addresses are skipped, plus the plan's broadcast allowance this month. Not in Resend. Requires the email:read scope.",
+        "description": "How many contacts a broadcast to all contacts, or to one segment, and optionally of one topic, would reach after unsubscribes, suppressions and invalid addresses are skipped, plus the plan's broadcast allowance this month. Not in Resend. Requires the email:read scope.",
         "tags": [
           "Broadcasts"
         ],
@@ -11264,6 +12047,14 @@
             "name": "segment_id",
             "in": "query",
             "description": "Preview one segment instead of all contacts",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "topic_id",
+            "in": "query",
+            "description": "Count only contacts subscribed to this topic",
             "schema": {
               "type": "string"
             }
@@ -13851,7 +14642,7 @@
       "post": {
         "operationId": "createApiKey",
         "summary": "Create API key",
-        "description": "Generate a new API key. The full key value is returned only once in the response. Store it securely.",
+        "description": "Generate a new API key. The full key value is returned only once in the response. Store it securely. Requires the apikey:manage scope when called with an API key. Called with an API key, the request may only reach keys with no more access than that key: a new or edited key gets only scopes the calling key has, never apikey:manage, and a key with scopes the calling key lacks, or made by a member with a higher role than the calling key's creator, cannot be edited or revoked. The dashboard is not limited this way. Without scopes the new key gets the default set, so a calling key that lacks any of those must name the scopes.",
         "tags": [
           "API Keys"
         ],
@@ -13892,6 +14683,44 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden. The caller is not a team owner or admin, or the calling API key reaches past its own access: code scope_not_grantable (scopes names what it may not grant), key_out_of_reach (the target key has the scopes named, or was made by a member with a higher role), expiring_key (a connected app's token cannot create keys), key_revoked or missing_scope (the calling key was revoked or lost apikey:manage while the request waited).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "An API key can only grant scopes it has itself, and never apikey:manage. Not allowed: apikey:manage. Name fewer scopes, or create the key in the dashboard."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "scope_not_grantable",
+                        "key_out_of_reach",
+                        "expiring_key",
+                        "key_revoked",
+                        "missing_scope"
+                      ]
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "apikey:manage"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -14002,7 +14831,7 @@
       "patch": {
         "operationId": "updateApiKey",
         "summary": "Update API key",
-        "description": "Rename a key or change its scopes. The secret is unchanged; scope changes apply on the key's next request. Requires the apikey:manage scope when called with an API key.",
+        "description": "Rename a key, change its scopes, or set the category of its unlabelled SMTP mail (smtp_category). The secret is unchanged; scope changes apply on the key's next request. Requires the apikey:manage scope when called with an API key. Called with an API key, the request may only reach keys with no more access than that key: a new or edited key gets only scopes the calling key has, never apikey:manage, and a key with scopes the calling key lacks, or made by a member with a higher role than the calling key's creator, cannot be edited or revoked. The dashboard is not limited this way.",
         "tags": [
           "API Keys"
         ],
@@ -14034,6 +14863,14 @@
                       "type": "string"
                     },
                     "description": "Replaces the key's scopes"
+                  },
+                  "smtp_category": {
+                    "type": "string",
+                    "enum": [
+                      "transactional",
+                      "marketing"
+                    ],
+                    "description": "Not in Resend. The category of mail sent over SMTP with this key when the message has no X-SMTPfast-Category header. transactional: no List-Unsubscribe header, and a recipient's marketing opt-out does not block it (use it for a key that only sends sign-in, password-reset and receipt mail, for example from Supabase Auth or Firebase). marketing: the one-click unsubscribe header and every opt-out apply (use it for newsletters). A message with an unsubscribe placeholder is always marketing. Sends through the HTTP API are not affected; they use the category field. Defaults to marketing. Never set transactional on a key that sends newsletters or promotions."
                   }
                 }
               }
@@ -14046,24 +14883,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "keyPrefix": {
-                      "type": "string"
-                    },
-                    "scopes": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/ApiKey"
                 }
               }
             }
@@ -14089,11 +14909,39 @@
             }
           },
           "403": {
-            "description": "Forbidden - domain not verified or insufficient permissions",
+            "description": "Forbidden. The caller is not a team owner or admin, or the calling API key reaches past its own access: code scope_not_grantable (scopes names what it may not grant), key_out_of_reach (the target key has the scopes named, or was made by a member with a higher role), expiring_key (a connected app's token cannot create keys), key_revoked or missing_scope (the calling key was revoked or lost apikey:manage while the request waited).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "An API key can only grant scopes it has itself, and never apikey:manage. Not allowed: apikey:manage. Name fewer scopes, or create the key in the dashboard."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "scope_not_grantable",
+                        "key_out_of_reach",
+                        "expiring_key",
+                        "key_revoked",
+                        "missing_scope"
+                      ]
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "apikey:manage"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -14137,7 +14985,7 @@
       "delete": {
         "operationId": "revokeApiKey",
         "summary": "Revoke API key",
-        "description": "Permanently revoke an API key. Any requests using this key will be rejected immediately.",
+        "description": "Permanently revoke an API key. Any requests using this key will be rejected immediately. Requires the apikey:manage scope when called with an API key. Called with an API key, the request may only reach keys with no more access than that key: a new or edited key gets only scopes the calling key has, never apikey:manage, and a key with scopes the calling key lacks, or made by a member with a higher role than the calling key's creator, cannot be edited or revoked. The dashboard is not limited this way.",
         "tags": [
           "API Keys"
         ],
@@ -14178,12 +15026,60 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request - check your payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Invalid or missing API key",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden. The caller is not a team owner or admin, or the calling API key reaches past its own access: code scope_not_grantable (scopes names what it may not grant), key_out_of_reach (the target key has the scopes named, or was made by a member with a higher role), expiring_key (a connected app's token cannot create keys), key_revoked or missing_scope (the calling key was revoked or lost apikey:manage while the request waited).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "An API key can only grant scopes it has itself, and never apikey:manage. Not allowed: apikey:manage. Name fewer scopes, or create the key in the dashboard."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "scope_not_grantable",
+                        "key_out_of_reach",
+                        "expiring_key",
+                        "key_revoked",
+                        "missing_scope"
+                      ]
+                    },
+                    "scopes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "apikey:manage"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -16517,7 +17413,7 @@
       "post": {
         "operationId": "createSignupForm",
         "summary": "Create a signup form",
-        "description": "Create a new signup form, including its confirmation sender and welcome email if you send them. After creation, the embed snippet at /api/forms/{id}/submit (HTML) or /api/forms/{id}/embed.js (JavaScript widget) can be used on third-party sites. Request keys are snake_case; the older camelCase keys are still accepted. Requires the form:write scope.",
+        "description": "Create a new signup form, including its confirmation sender and welcome email if you send them. After creation, embed it on any site with the dashboard's snippets: the widget (https://smtpfa.st/embed/forms-1.js, or a pinned version with an integrity hash) with a <div data-smtpfast-form=\"{id}\">, an iframe of https://smtpfa.st/f/{id}, or a plain HTML form posting to /api/forms/{id}/submit. Request keys are snake_case; the older camelCase keys are still accepted. Requires the form:write scope.",
         "tags": [
           "Forms"
         ],
@@ -18214,7 +19110,7 @@
       "post": {
         "operationId": "approvePendingSignup",
         "summary": "Approve a pending signup",
-        "description": "Confirm one pending signup without waiting for the link click. It becomes a contact, fires contact.subscribed and gets the welcome email if enabled. Approving one that is already confirmed returns 200 with already_confirmed. Returns 409 when the form is no longer active. Requires the form:write scope.",
+        "description": "Confirm one pending signup without waiting for the link click. It becomes a contact, fires contact.subscribed and gets the welcome email if enabled. Approving one that is already confirmed returns 200 with already_confirmed. Returns 409 when the form is no longer active, or when the address has unsubscribed or is suppressed since it signed up (the pending signup is then removed). Requires the form:write scope.",
         "tags": [
           "Forms"
         ],
@@ -18343,7 +19239,7 @@
       "get": {
         "operationId": "getAnalytics",
         "summary": "Get analytics",
-        "description": "Sending and deliverability totals for the account, plus a 30-day daily series. Pass days and/or domain to add a `window` object holding exact counts for that window and sending domain, aggregated in the database rather than sampled from the event log.",
+        "description": "Sending and deliverability totals for the account, plus a 30-day daily series. bounceRate counts hard bounces only, over the last 30 days; the bounces object has the hard and soft counts behind it. Pass days and/or domain to add a `window` object holding exact counts for that window and sending domain, aggregated in the database rather than sampled from the event log. Every window here is rolling and ends at the time of the request, in UTC: today is the last 24 hours, thisWeek the last 7 x 24 hours, bounces the last 30 x 24 hours, and window the last days x 24 hours (from = now minus days x 24 hours, not midnight). Only daily uses calendar days: 30 UTC dates ending today, with today still in progress. GET /v1/emails/metrics works on calendar dates instead, so the same \"last 7 days\" can differ between the two; see its start_date.",
         "tags": [
           "Analytics"
         ],
@@ -18351,7 +19247,7 @@
           {
             "name": "days",
             "in": "query",
-            "description": "Window in days (1-90) for the `window` block. Present in the response only when days or domain is given.",
+            "description": "Rolling window for the `window` block: the last days x 24 hours up to the time of the request (UTC), not from midnight. 1-90; the block is present only when days or domain is given.",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -19591,7 +20487,7 @@
           "attachments": {
             "type": "array",
             "maxItems": 10,
-            "description": "Up to 10 files, base64 encoded, 25 MB per message in total. A content_id makes the part inline: reference it from the HTML as cid:<content_id>.",
+            "description": "Up to 10 files, base64 encoded, 10 MB each and 25 MB per message in total (413 over a limit). A content_id makes the part inline: reference it from the HTML as cid:<content_id>. On POST /v1/emails and on each batch item, a file whose name ends in an extension Amazon SES blocks (.exe, .bat, .js, .tmp and others; see https://docs.aws.amazon.com/ses/latest/dg/attachments.html) is refused with 422, and nothing is sent.",
             "items": {
               "type": "object",
               "required": [
@@ -19751,7 +20647,7 @@
               "marketing"
             ],
             "default": "marketing",
-            "description": "Defaults to marketing. Label receipts, password resets and other transactional mail transactional so a marketing opt-out does not block them; unlabelled mail is treated as marketing. Over SMTP, set the X-SMTPfast-Category header instead; it is removed before sending. An email whose html or text (for a template, the rendered body) contains an unsubscribe placeholder is always marketing. A marketing email carries the one-click List-Unsubscribe header and is not sent to anyone who unsubscribed. A transactional email has no List-Unsubscribe header and still goes to addresses whose suppression has scope marketing (a recipient's own unsubscribe, or a manual suppression created with scope marketing), but not to addresses with scope all: hard bounces, complaints, and manual suppressions, which block everything by default. Transactional means mail the recipient needs because of an action or account; labelling promotions transactional is not allowed. Any other value is refused with 400.",
+            "description": "Defaults to marketing. Label receipts, password resets and other transactional mail transactional so a marketing opt-out does not block them; unlabelled mail is treated as marketing. Over SMTP, set the X-SMTPfast-Category header instead; it is removed before sending. An SMTP message without the header takes the category set on its API key (smtp_category). An email whose html or text (for a template, the rendered body) contains an unsubscribe placeholder is always marketing. A marketing email carries the one-click List-Unsubscribe header and is not sent to anyone who unsubscribed. A transactional email has no List-Unsubscribe header and still goes to addresses whose suppression has scope marketing (a recipient's own unsubscribe, or a manual suppression created with scope marketing), but not to addresses with scope all: hard bounces, complaints, and manual suppressions, which block everything by default. Transactional means mail the recipient needs because of an action or account; labelling promotions transactional is not allowed. Any other value is refused with 400.",
             "example": "transactional"
           },
           "track_clicks": {
@@ -19771,7 +20667,7 @@
           },
           "text": {
             "type": "string",
-            "description": "Plain text fallback body. Supports the same `{{unsubscribe_url}}` placeholder as the HTML body.",
+            "description": "Plain text fallback body. Supports the same `{{unsubscribe_url}}` placeholder as the HTML body. When left out, a text part is generated from the html: from its first 512 KB (524,288 characters), with a closing line that points to the HTML version when it is longer.",
             "example": "Hello! (plain text fallback)"
           }
         }
@@ -19786,6 +20682,36 @@
           "id": {
             "type": "string",
             "example": "email_abc123"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "Not in Resend. Present only when the send was accepted with something to check. category_not_set: the request had no category (and no X-SMTPfast-Category header), so the email was sent as marketing, with a one-click unsubscribe link.",
+            "items": {
+              "$ref": "#/components/schemas/SendWarning"
+            }
+          }
+        }
+      },
+      "SendWarning": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "category_not_set"
+          },
+          "message": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "description": "Batch sends only: the indexes of the items the warning is about, in request order.",
+            "items": {
+              "type": "integer"
+            }
           }
         }
       },
@@ -20194,7 +21120,7 @@
       },
       "BatchSendRequest": {
         "type": "array",
-        "description": "JSON array of email objects (1 to 100). Each item accepts the same fields as POST /v1/emails.",
+        "description": "JSON array of email objects (1 to 100). Each item accepts the same fields as POST /v1/emails, attachments included, with the same per-message limits. All the attachments in one batch together can be at most 25 MB.",
         "minItems": 1,
         "maxItems": 100,
         "items": {
@@ -20278,6 +21204,13 @@
                   "example": "email_abc123"
                 }
               }
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "description": "Present only when there is something to check. category_not_set lists in items the emails sent without a category, which went out as marketing.",
+            "items": {
+              "$ref": "#/components/schemas/SendWarning"
             }
           }
         }
@@ -21291,6 +22224,14 @@
           "audience_meta": {
             "$ref": "#/components/schemas/AudienceMeta"
           },
+          "topic_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Resend-compatible. Only contacts subscribed to this topic get the broadcast (their own opt-in, or the topic default), and its unsubscribe link and one-click header remove that topic only. Contacts who unsubscribed from everything and suppressed addresses are always left out. Omit it, or send null, to send to every subscribed contact in the audience.",
+            "example": "clx_topic123"
+          },
           "template_id": {
             "type": "string",
             "description": "Not in Resend, and only on create (PATCH ignores it). Start from a template (id or alias): its current content, as the template editor shows it, is copied into the new draft, with declared fallbacks written inline. Fields sent alongside win. name defaults to the template's name.",
@@ -21326,7 +22267,8 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "HTML body, at most 100,000 characters. HTML with merge tags is parsed to place each value, so it must stay within 131,072 characters, 10,000 tags, 300 merge tags, 256 levels of nesting and 256 attributes on one element, without heavily misplaced markup. Over that, saving or sending it answers 422 with code html_too_complex."
           },
           "text": {
             "type": [
@@ -21453,6 +22395,13 @@
               "null"
             ],
             "description": "The segment the broadcast goes to when audience is segment, otherwise null"
+          },
+          "topic_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The topic the broadcast belongs to: only contacts subscribed to it get it, and its unsubscribe link removes that topic only. null: every subscribed contact in the audience."
           },
           "from": {
             "type": [
@@ -21873,7 +22822,18 @@
           },
           "bounced": {
             "type": "integer",
+            "description": "Every bounce, hard plus soft.",
             "example": 9
+          },
+          "hard_bounced": {
+            "type": "integer",
+            "description": "Bounces SES marked Permanent or Undetermined: the address does not exist or does not take mail.",
+            "example": 4
+          },
+          "soft_bounced": {
+            "type": "integer",
+            "description": "Bounces SES marked Transient: a temporary failure such as a full mailbox.",
+            "example": 5
           },
           "complained": {
             "type": "integer",
@@ -21905,7 +22865,18 @@
           },
           "bounce_rate": {
             "type": "number",
-            "example": 0.7
+            "description": "Hard bounces only, as SES counts them: the same as hard_bounce_rate. Percent of recipients not skipped.",
+            "example": 0.3
+          },
+          "hard_bounce_rate": {
+            "type": "number",
+            "description": "hard_bounced as a percent of recipients not skipped.",
+            "example": 0.3
+          },
+          "soft_bounce_rate": {
+            "type": "number",
+            "description": "soft_bounced as a percent of recipients not skipped. Not part of bounce_rate.",
+            "example": 0.4
           }
         }
       },
@@ -21960,7 +22931,18 @@
           },
           "bounced": {
             "type": "integer",
+            "description": "Every bounce, hard plus soft.",
             "example": 9
+          },
+          "hard_bounced": {
+            "type": "integer",
+            "description": "Bounces SES marked Permanent or Undetermined.",
+            "example": 4
+          },
+          "soft_bounced": {
+            "type": "integer",
+            "description": "Bounces SES marked Transient, such as a full mailbox.",
+            "example": 5
           },
           "complained": {
             "type": "integer",
@@ -21997,8 +22979,16 @@
               "number",
               "null"
             ],
-            "description": "bounced / (delivered + bounced).",
-            "example": 1.12
+            "description": "hard_bounced / (delivered + bounced): hard bounces only, as SES counts them.",
+            "example": 0.5
+          },
+          "soft_bounce_rate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "soft_bounced / (delivered + bounced). Not part of bounce_rate.",
+            "example": 0.62
           },
           "complaint_rate": {
             "type": [
@@ -22129,7 +23119,7 @@
           "html": {
             "type": "string",
             "maxLength": 100000,
-            "description": "The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}."
+            "description": "The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}. HTML with merge tags is parsed to place each value, so it must stay within 131,072 characters, 10,000 tags, 300 merge tags, 256 levels of nesting and 256 attributes on one element, without heavily misplaced markup. Over that, saving or sending it answers 422 with code html_too_complex."
           },
           "text": {
             "type": [
@@ -22232,7 +23222,7 @@
               "null"
             ],
             "maxLength": 100000,
-            "description": "The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}."
+            "description": "The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}. HTML with merge tags is parsed to place each value, so it must stay within 131,072 characters, 10,000 tags, 300 merge tags, 256 levels of nesting and 256 attributes on one element, without heavily misplaced markup. Over that, saving or sending it answers 422 with code html_too_complex."
           },
           "text": {
             "type": [
@@ -22709,6 +23699,22 @@
             "example": null,
             "description": "Create, retrieve and update return it; list items leave it out."
           },
+          "topic_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null,
+            "description": "The topic a signup subscribes the contact to, or null."
+          },
+          "consent_text": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null,
+            "description": "Shown under the form and stored with each topic opt-in."
+          },
           "welcome_stats": {
             "type": "object",
             "description": "Welcome emails sent and skipped for this form, and how many were delivered, opened and clicked. List items leave it out.",
@@ -23089,6 +24095,21 @@
             ],
             "maxLength": 50000,
             "description": "Welcome email body as Markdown."
+          },
+          "topic_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A signup subscribes the contact to this topic only. Existing contacts can sign up too, and nothing else about them changes; a contact who unsubscribed from everything stays unsubscribed. null removes the topic, and the form adds contacts to the list as before."
+          },
+          "consent_text": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500,
+            "description": "Shown under the form and stored with each topic opt-in."
           }
         }
       },
@@ -23195,6 +24216,21 @@
             ],
             "maxLength": 50000,
             "description": "Welcome email body as Markdown."
+          },
+          "topic_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A signup subscribes the contact to this topic only. Existing contacts can sign up too, and nothing else about them changes; a contact who unsubscribed from everything stays unsubscribed. null removes the topic, and the form adds contacts to the list as before."
+          },
+          "consent_text": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500,
+            "description": "Shown under the form and stored with each topic opt-in."
           }
         }
       },
@@ -23311,7 +24347,11 @@
               "failed"
             ],
             "example": "pending",
-            "description": "GET /v1/domains/{id} answers pending for a verified domain whose required records are no longer live."
+            "description": "The stored status, which gates sending: verified once DKIM and the email provider identity are verified. POST /v1/domains/{id}/verify and the background check update it. A required record that is not live right now does not change it; dns_live, verification_phase and each record's live_check show that."
+          },
+          "dns_live": {
+            "type": "boolean",
+            "description": "GET /v1/domains/{id} only. True when every required record (DKIM, SPF, DMARC, MAIL FROM) matches a live lookup at the domain's own nameservers. A verified domain with dns_live false still sends; fix the records each live_check marks."
           },
           "receiving": {
             "type": "object",
@@ -23597,11 +24637,20 @@
             "items": {
               "type": "string"
             },
-            "description": "Optional list of scopes to restrict the key. Available: email:send, email:read, domain:read, domain:write, contact:read, contact:write, form:read, form:write, webhook:read, webhook:write, logs:read, inbound:read, inbound:delete, team:read, team:manage, billing:read, billing:manage, apikey:manage. If omitted the key gets the default set: everything except logs:read, inbound:read, inbound:delete, team:read, team:manage, billing:read, billing:manage and apikey:manage. Listing, creating or revoking keys through the API requires apikey:manage.",
+            "description": "Optional list of scopes to restrict the key. Available: email:send, email:read, domain:read, domain:write, contact:read, contact:write, form:read, form:write, webhook:read, webhook:write, logs:read, inbound:read, inbound:delete, team:read, team:manage, billing:read, billing:manage, apikey:manage. If omitted the key gets the default set: everything except logs:read, inbound:read, inbound:delete, team:read, team:manage, billing:read, billing:manage and apikey:manage. Listing, creating or revoking keys through the API requires apikey:manage, and a key can only give a new key scopes it has itself, never apikey:manage.",
             "example": [
               "email:send",
               "domain:read"
             ]
+          },
+          "smtp_category": {
+            "type": "string",
+            "enum": [
+              "transactional",
+              "marketing"
+            ],
+            "default": "marketing",
+            "description": "Not in Resend. The category of mail sent over SMTP with this key when the message has no X-SMTPfast-Category header. transactional: no List-Unsubscribe header, and a recipient's marketing opt-out does not block it (use it for a key that only sends sign-in, password-reset and receipt mail, for example from Supabase Auth or Firebase). marketing: the one-click unsubscribe header and every opt-out apply (use it for newsletters). A message with an unsubscribe placeholder is always marketing. Sends through the HTTP API are not affected; they use the category field. Defaults to marketing. Never set transactional on a key that sends newsletters or promotions."
           }
         }
       },
@@ -23634,6 +24683,14 @@
               "emails:send",
               "domains:read"
             ]
+          },
+          "smtp_category": {
+            "type": "string",
+            "enum": [
+              "transactional",
+              "marketing"
+            ],
+            "description": "The category of unlabelled SMTP mail sent with this key"
           },
           "created_at": {
             "type": "string",
@@ -23768,6 +24825,14 @@
               "email:send",
               "domain:read"
             ]
+          },
+          "smtp_category": {
+            "type": "string",
+            "enum": [
+              "transactional",
+              "marketing"
+            ],
+            "description": "The category of unlabelled SMTP mail sent with this key"
           },
           "created_at": {
             "type": "string",
@@ -24515,12 +25580,12 @@
           },
           "today": {
             "type": "integer",
-            "description": "Emails sent in the last 24 hours",
+            "description": "Emails sent in the last 24 hours (rolling, ending now; not since midnight)",
             "example": 312
           },
           "thisWeek": {
             "type": "integer",
-            "description": "Emails sent in the last 7 days",
+            "description": "Emails sent in the last 7 x 24 hours (rolling, ending now; not calendar days)",
             "example": 2190
           },
           "delivered": {
@@ -24530,6 +25595,7 @@
           },
           "bounced": {
             "type": "integer",
+            "description": "Emails with status bounced, hard or soft, all time",
             "example": 402
           },
           "complained": {
@@ -24564,12 +25630,55 @@
           "bounceRate": {
             "type": "number",
             "format": "float",
-            "description": "bounced / (sent - awaitingReport), as a percentage",
-            "example": 1.7
+            "description": "Hard bounce rate over the last 30 days, as a percentage: the same as bounces.hardRate. Hard bounces only, as SES counts them; soft bounces are in bounces.soft.",
+            "example": 0.6
+          },
+          "bounces": {
+            "type": "object",
+            "description": "Bounces over a rolling window (the last 30 days), counted by when each email was sent. A hard bounce is one SES marked Permanent or Undetermined: the address does not exist or does not take mail. A soft bounce is Transient, a temporary failure such as a full mailbox, and is not part of the bounce rate. A past bounce stays counted even if the address was later unsubscribed or suppressed.",
+            "properties": {
+              "days": {
+                "type": "integer",
+                "description": "Window length in days",
+                "example": 30
+              },
+              "from": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Start of the window: the time of the request minus 30 x 24 hours"
+              },
+              "reported": {
+                "type": "integer",
+                "description": "Emails sent in the window with a delivery or bounce report: the rates are over this",
+                "example": 10840
+              },
+              "hard": {
+                "type": "integer",
+                "description": "Hard-bounced emails sent in the window",
+                "example": 65
+              },
+              "soft": {
+                "type": "integer",
+                "description": "Soft-bounced emails sent in the window",
+                "example": 212
+              },
+              "hardRate": {
+                "type": "number",
+                "format": "float",
+                "description": "hard / reported, as a percentage",
+                "example": 0.6
+              },
+              "softRate": {
+                "type": "number",
+                "format": "float",
+                "description": "soft / reported, as a percentage",
+                "example": 2
+              }
+            }
           },
           "daily": {
             "type": "array",
-            "description": "Last 30 days, bucketed by the UTC day each email was sent",
+            "description": "30 UTC calendar dates ending today (today is still in progress), bucketed by the UTC day each email was sent",
             "items": {
               "type": "object",
               "properties": {
@@ -24624,7 +25733,7 @@
           },
           "window": {
             "type": "object",
-            "description": "Present when days or domain is passed",
+            "description": "Present when days or domain is passed. A rolling window from now minus days x 24 hours to now, in UTC. sent and delivered count emails by when they were sent, failed by when they were created, and the bounce and complaint counts by when the report arrived.",
             "properties": {
               "days": {
                 "type": "integer",
@@ -24632,11 +25741,13 @@
               },
               "from": {
                 "type": "string",
-                "format": "date-time"
+                "format": "date-time",
+                "description": "Start of the window: to minus days x 24 hours"
               },
               "to": {
                 "type": "string",
-                "format": "date-time"
+                "format": "date-time",
+                "description": "End of the window: the time of the request"
               },
               "domain": {
                 "type": [
@@ -24654,10 +25765,12 @@
                     "type": "integer"
                   },
                   "hard_bounced": {
-                    "type": "integer"
+                    "type": "integer",
+                    "description": "Bounce events SES marked Permanent or Undetermined, not counting refusals by the SES account-level suppression list"
                   },
                   "soft_bounced": {
-                    "type": "integer"
+                    "type": "integer",
+                    "description": "Bounce events SES marked Transient"
                   },
                   "complained": {
                     "type": "integer"
@@ -25511,6 +26624,371 @@
               "null"
             ],
             "description": "A link to the PDF"
+          }
+        }
+      },
+      "TopicSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "default_subscription",
+          "visibility",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "clx_topic123"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 50,
+            "example": "Product updates"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "example": "New features, about once a month"
+          },
+          "default_subscription": {
+            "type": "string",
+            "enum": [
+              "opt_in",
+              "opt_out"
+            ],
+            "description": "The subscription of a contact that never chose. Fixed at creation."
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ],
+            "description": "public: on every contact's preference page. private: only on the page of contacts opted in."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Topic": {
+        "type": "object",
+        "required": [
+          "object",
+          "id",
+          "name",
+          "description",
+          "default_subscription",
+          "visibility",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "topic"
+          },
+          "id": {
+            "type": "string",
+            "example": "clx_topic123"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 50,
+            "example": "Product updates"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "example": "New features, about once a month"
+          },
+          "default_subscription": {
+            "type": "string",
+            "enum": [
+              "opt_in",
+              "opt_out"
+            ],
+            "description": "The subscription of a contact that never chose. Fixed at creation."
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ],
+            "description": "public: on every contact's preference page. private: only on the page of contacts opted in."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subscribed_contacts": {
+            "type": "integer",
+            "description": "Create only, when subscribe_existing_contacts was true: how many contacts were opted in."
+          }
+        }
+      },
+      "TopicList": {
+        "type": "object",
+        "required": [
+          "object",
+          "has_more",
+          "data",
+          "total",
+          "topic_limit",
+          "subscribed_contacts"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "list"
+          },
+          "has_more": {
+            "type": "boolean",
+            "example": false,
+            "description": "Always false: every topic is in one page"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopicSummary"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 2
+          },
+          "topic_limit": {
+            "type": "integer",
+            "example": 50
+          },
+          "subscribed_contacts": {
+            "type": "integer",
+            "example": 1200,
+            "description": "Contacts subscribed and not suppressed now: what subscribe_existing_contacts would opt in to a new topic."
+          }
+        }
+      },
+      "CreateTopicRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "default_subscription"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 50,
+            "example": "Product updates"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "example": "New features, about once a month"
+          },
+          "default_subscription": {
+            "type": "string",
+            "enum": [
+              "opt_in",
+              "opt_out"
+            ],
+            "description": "The subscription of a contact that never chose. Fixed at creation."
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ],
+            "description": "public: on every contact's preference page. private: only on the page of contacts opted in.",
+            "default": "private"
+          },
+          "subscribe_existing_contacts": {
+            "type": "boolean",
+            "default": false,
+            "description": "Not in Resend. Only with default_subscription opt_out: opt in every contact who is subscribed and not suppressed now."
+          }
+        }
+      },
+      "UpdateTopicRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 50,
+            "example": "Product updates"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "example": "New features, about once a month"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ],
+            "description": "public: on every contact's preference page. private: only on the page of contacts opted in."
+          }
+        }
+      },
+      "ContactTopic": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "subscription",
+          "default_subscription",
+          "visibility",
+          "source",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The topic ID"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subscription": {
+            "type": "string",
+            "enum": [
+              "opt_in",
+              "opt_out"
+            ],
+            "description": "The contact's choice, else the topic default"
+          },
+          "default_subscription": {
+            "type": "string",
+            "enum": [
+              "opt_in",
+              "opt_out"
+            ]
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "api",
+              "dashboard",
+              "form",
+              "unsubscribe_link",
+              "preference_page",
+              "backfill",
+              null
+            ],
+            "description": "Where the contact's choice was made; null when the default applies"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the contact chose; null when the default applies"
+          }
+        }
+      },
+      "ContactTopicList": {
+        "type": "object",
+        "required": [
+          "object",
+          "has_more",
+          "data",
+          "total"
+        ],
+        "properties": {
+          "object": {
+            "type": "string",
+            "example": "list"
+          },
+          "has_more": {
+            "type": "boolean",
+            "example": false
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactTopic"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "UpdateContactTopicsRequest": {
+        "type": "object",
+        "required": [
+          "topics"
+        ],
+        "properties": {
+          "topics": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "subscription"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The topic ID"
+                },
+                "subscription": {
+                  "type": "string",
+                  "enum": [
+                    "opt_in",
+                    "opt_out"
+                  ]
+                }
+              }
+            }
           }
         }
       }

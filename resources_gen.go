@@ -23,6 +23,7 @@ type Service struct {
 	Account           *AccountService
 	Team              *TeamService
 	Billing           *BillingService
+	Topics            *TopicsService
 	Suppressions      *SuppressionsService
 	Broadcasts        *BroadcastsService
 	Templates         *TemplatesService
@@ -47,6 +48,7 @@ func newService(c *core) *Service {
 		Account:           newAccountService(c),
 		Team:              newTeamService(c),
 		Billing:           newBillingService(c),
+		Topics:            newTopicsService(c),
 		Suppressions:      newSuppressionsService(c),
 		Broadcasts:        newBroadcastsService(c),
 		Templates:         newTemplatesService(c),
@@ -1109,12 +1111,14 @@ func (s *ContactPropertiesService) Delete(ctx context.Context, id string, opts .
 type ContactsService struct {
 	core     *core
 	Segments *ContactsSegmentsService
+	Topics   *ContactsTopicsService
 }
 
 func newContactsService(c *core) *ContactsService {
 	return &ContactsService{
 		core:     c,
 		Segments: newContactsSegmentsService(c),
+		Topics:   newContactsTopicsService(c),
 	}
 }
 
@@ -1133,6 +1137,9 @@ func (s *ContactsService) List(ctx context.Context, query *ListContactsQuery, op
 		}
 		if query.SegmentID != nil {
 			setQuery(q, "segment_id", *query.SegmentID)
+		}
+		if query.TopicID != nil {
+			setQuery(q, "topic_id", *query.TopicID)
 		}
 		if query.Limit != nil {
 			setQuery(q, "limit", *query.Limit)
@@ -1259,6 +1266,37 @@ func (s *ContactsSegmentsService) Add(ctx context.Context, id string, segmentID 
 func (s *ContactsSegmentsService) Remove(ctx context.Context, id string, segmentID string, opts ...RequestOption) (map[string]any, error) {
 	var out map[string]any
 	err := s.core.do(ctx, "DELETE", "/v1/contacts/{id}/segments/{segment_id}", map[string]string{"id": id, "segment_id": segmentID}, nil, nil, false, &out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ContactsTopicsService groups the contacts.topics operations.
+type ContactsTopicsService struct {
+	core *core
+}
+
+func newContactsTopicsService(c *core) *ContactsTopicsService {
+	return &ContactsTopicsService{
+		core: c,
+	}
+}
+
+// List: List a contact's topics (GET /v1/contacts/{id}/topics).
+func (s *ContactsTopicsService) List(ctx context.Context, id string, opts ...RequestOption) (*ContactTopicList, error) {
+	out := new(ContactTopicList)
+	err := s.core.do(ctx, "GET", "/v1/contacts/{id}/topics", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Update: Update a contact's topics (PATCH /v1/contacts/{id}/topics).
+func (s *ContactsTopicsService) Update(ctx context.Context, id string, params *UpdateContactTopicsRequest, opts ...RequestOption) (*UpdateContactTopicsResponse, error) {
+	out := new(UpdateContactTopicsResponse)
+	err := s.core.do(ctx, "PATCH", "/v1/contacts/{id}/topics", map[string]string{"id": id}, nil, params, false, out, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -1655,6 +1693,67 @@ func (s *BillingInvoicesService) ListAll(ctx context.Context, query *ListBilling
 	return paginate[Invoice](ctx, s.core, "/v1/billing/invoices", map[string]string{}, q, opts)
 }
 
+// TopicsService groups the topics operations.
+type TopicsService struct {
+	core *core
+}
+
+func newTopicsService(c *core) *TopicsService {
+	return &TopicsService{
+		core: c,
+	}
+}
+
+// List: List topics (GET /v1/topics).
+func (s *TopicsService) List(ctx context.Context, opts ...RequestOption) (*TopicList, error) {
+	out := new(TopicList)
+	err := s.core.do(ctx, "GET", "/v1/topics", map[string]string{}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Create: Create a topic (POST /v1/topics).
+func (s *TopicsService) Create(ctx context.Context, params *CreateTopicRequest, opts ...RequestOption) (*Topic, error) {
+	out := new(Topic)
+	err := s.core.do(ctx, "POST", "/v1/topics", map[string]string{}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Get: Retrieve a topic (GET /v1/topics/{id}).
+func (s *TopicsService) Get(ctx context.Context, id string, opts ...RequestOption) (*Topic, error) {
+	out := new(Topic)
+	err := s.core.do(ctx, "GET", "/v1/topics/{id}", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Update: Update a topic (PATCH /v1/topics/{id}).
+func (s *TopicsService) Update(ctx context.Context, id string, params *UpdateTopicRequest, opts ...RequestOption) (*Topic, error) {
+	out := new(Topic)
+	err := s.core.do(ctx, "PATCH", "/v1/topics/{id}", map[string]string{"id": id}, nil, params, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// Delete: Delete a topic (DELETE /v1/topics/{id}).
+func (s *TopicsService) Delete(ctx context.Context, id string, opts ...RequestOption) (*DeletedObject, error) {
+	out := new(DeletedObject)
+	err := s.core.do(ctx, "DELETE", "/v1/topics/{id}", map[string]string{"id": id}, nil, nil, false, out, opts)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SuppressionsService groups the suppressions operations.
 type SuppressionsService struct {
 	core *core
@@ -1819,6 +1918,9 @@ func (s *BroadcastsService) GetAudience(ctx context.Context, query *GetBroadcast
 	if query != nil {
 		if query.SegmentID != nil {
 			setQuery(q, "segment_id", *query.SegmentID)
+		}
+		if query.TopicID != nil {
+			setQuery(q, "topic_id", *query.TopicID)
 		}
 	}
 	var out map[string]any
@@ -2206,8 +2308,8 @@ func (s *APIKeysService) Create(ctx context.Context, params *CreateAPIKeyRequest
 }
 
 // Update: Update API key (PATCH /v1/api-keys/{id}).
-func (s *APIKeysService) Update(ctx context.Context, id string, params *UpdateAPIKeyParams, opts ...RequestOption) (*UpdateAPIKeyResponse, error) {
-	out := new(UpdateAPIKeyResponse)
+func (s *APIKeysService) Update(ctx context.Context, id string, params *UpdateAPIKeyParams, opts ...RequestOption) (*APIKey, error) {
+	out := new(APIKey)
 	err := s.core.do(ctx, "PATCH", "/v1/api-keys/{id}", map[string]string{"id": id}, nil, params, false, out, opts)
 	if err != nil {
 		return nil, err

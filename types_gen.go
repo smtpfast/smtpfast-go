@@ -4,13 +4,15 @@ package smtpfast
 
 // APIKey: List and update responses also carry the same values in camelCase (keyPrefix, createdAt, lastUsedAt, revokedAt, expiresAt, grantExpiresAt) for older c
 type APIKey struct {
-	ID         string           `json:"id"`
-	Name       string           `json:"name"`
-	Prefix     string           `json:"prefix"`
-	Scopes     []string         `json:"scopes"`
-	CreatedAt  string           `json:"created_at"`
-	LastUsedAt Nullable[string] `json:"last_used_at,omitzero"`
-	RevokedAt  Nullable[string] `json:"revoked_at,omitzero"`
+	ID     string   `json:"id"`
+	Name   string   `json:"name"`
+	Prefix string   `json:"prefix"`
+	Scopes []string `json:"scopes"`
+	// SMTPCategory: The category of unlabelled SMTP mail sent with this key
+	SMTPCategory *string          `json:"smtp_category,omitzero"`
+	CreatedAt    string           `json:"created_at"`
+	LastUsedAt   Nullable[string] `json:"last_used_at,omitzero"`
+	RevokedAt    Nullable[string] `json:"revoked_at,omitzero"`
 	// ExpiresAt: Set for connected-app keys, which rotate.
 	ExpiresAt Nullable[string] `json:"expires_at,omitzero"`
 	// GrantExpiresAt: When a connected app's grant ends.
@@ -19,12 +21,14 @@ type APIKey struct {
 
 // APIKeyCreated: Returned when a new API key is created. The key field contains the full secret and is only shown once.
 type APIKeyCreated struct {
-	ID        *string  `json:"id,omitzero"`
-	Name      *string  `json:"name,omitzero"`
-	Key       *string  `json:"key,omitzero"`
-	Prefix    *string  `json:"prefix,omitzero"`
-	Scopes    []string `json:"scopes,omitzero"`
-	CreatedAt *string  `json:"created_at,omitzero"`
+	ID     *string  `json:"id,omitzero"`
+	Name   *string  `json:"name,omitzero"`
+	Key    *string  `json:"key,omitzero"`
+	Prefix *string  `json:"prefix,omitzero"`
+	Scopes []string `json:"scopes,omitzero"`
+	// SMTPCategory: The category of unlabelled SMTP mail sent with this key
+	SMTPCategory *string `json:"smtp_category,omitzero"`
+	CreatedAt    *string `json:"created_at,omitzero"`
 }
 
 type AddDomainRequest struct {
@@ -41,12 +45,13 @@ type Analytics struct {
 	Total *int64 `json:"total,omitzero"`
 	// Sent: Emails that went out (sent, delivered, opened, clicked, bounced or complained). The rates are worked out against this.
 	Sent *int64 `json:"sent,omitzero"`
-	// Today: Emails sent in the last 24 hours
+	// Today: Emails sent in the last 24 hours (rolling, ending now; not since midnight)
 	Today *int64 `json:"today,omitzero"`
-	// ThisWeek: Emails sent in the last 7 days
+	// ThisWeek: Emails sent in the last 7 x 24 hours (rolling, ending now; not calendar days)
 	ThisWeek *int64 `json:"thisWeek,omitzero"`
 	// Delivered: Accepted by the receiving server, including those later opened or clicked
-	Delivered  *int64 `json:"delivered,omitzero"`
+	Delivered *int64 `json:"delivered,omitzero"`
+	// Bounced: Emails with status bounced, hard or soft, all time
 	Bounced    *int64 `json:"bounced,omitzero"`
 	Complained *int64 `json:"complained,omitzero"`
 	// Failed: Never sent because of an error
@@ -58,13 +63,33 @@ type Analytics struct {
 	AwaitingReport *int64 `json:"awaitingReport,omitzero"`
 	// DeliveryRate: (delivered + complained) / (sent - awaitingReport), as a percentage
 	DeliveryRate *float64 `json:"deliveryRate,omitzero"`
-	// BounceRate: bounced / (sent - awaitingReport), as a percentage
+	// BounceRate: Hard bounce rate over the last 30 days, as a percentage: the same as bounces.hardRate. Hard bounces only, as SES counts them; soft bounces are in boun
 	BounceRate *float64 `json:"bounceRate,omitzero"`
-	// Daily: Last 30 days, bucketed by the UTC day each email was sent
+	// Bounces: Bounces over a rolling window (the last 30 days), counted by when each email was sent. A hard bounce is one SES marked Permanent or Undetermined: the
+	Bounces *AnalyticsBounces `json:"bounces,omitzero"`
+	// Daily: 30 UTC calendar dates ending today (today is still in progress), bucketed by the UTC day each email was sent
 	Daily []AnalyticsDailyItem `json:"daily,omitzero"`
 	Usage *AnalyticsUsage      `json:"usage,omitzero"`
-	// Window: Present when days or domain is passed
+	// Window: Present when days or domain is passed. A rolling window from now minus days x 24 hours to now, in UTC. sent and delivered count emails by when they we
 	Window *AnalyticsWindow `json:"window,omitzero"`
+}
+
+// AnalyticsBounces: Bounces over a rolling window (the last 30 days), counted by when each email was sent. A hard bounce is one SES marked Permanent or Undetermined: the
+type AnalyticsBounces struct {
+	// Days: Window length in days
+	Days *int64 `json:"days,omitzero"`
+	// From: Start of the window: the time of the request minus 30 x 24 hours
+	From *string `json:"from,omitzero"`
+	// Reported: Emails sent in the window with a delivery or bounce report: the rates are over this
+	Reported *int64 `json:"reported,omitzero"`
+	// Hard: Hard-bounced emails sent in the window
+	Hard *int64 `json:"hard,omitzero"`
+	// Soft: Soft-bounced emails sent in the window
+	Soft *int64 `json:"soft,omitzero"`
+	// HardRate: hard / reported, as a percentage
+	HardRate *float64 `json:"hardRate,omitzero"`
+	// SoftRate: soft / reported, as a percentage
+	SoftRate *float64 `json:"softRate,omitzero"`
 }
 
 type AnalyticsDailyItem struct {
@@ -84,10 +109,12 @@ type AnalyticsUsage struct {
 	Tier *string `json:"tier,omitzero"`
 }
 
-// AnalyticsWindow: Present when days or domain is passed
+// AnalyticsWindow: Present when days or domain is passed. A rolling window from now minus days x 24 hours to now, in UTC. sent and delivered count emails by when they we
 type AnalyticsWindow struct {
-	Days         *int64                       `json:"days,omitzero"`
-	From         *string                      `json:"from,omitzero"`
+	Days *int64 `json:"days,omitzero"`
+	// From: Start of the window: to minus days x 24 hours
+	From *string `json:"from,omitzero"`
+	// To: End of the window: the time of the request
 	To           *string                      `json:"to,omitzero"`
 	Domain       Nullable[string]             `json:"domain,omitzero"`
 	Counts       *AnalyticsWindowCounts       `json:"counts,omitzero"`
@@ -96,9 +123,11 @@ type AnalyticsWindow struct {
 }
 
 type AnalyticsWindowCounts struct {
-	Sent        *int64 `json:"sent,omitzero"`
-	Delivered   *int64 `json:"delivered,omitzero"`
+	Sent      *int64 `json:"sent,omitzero"`
+	Delivered *int64 `json:"delivered,omitzero"`
+	// HardBounced: Bounce events SES marked Permanent or Undetermined, not counting refusals by the SES account-level suppression list
 	HardBounced *int64 `json:"hard_bounced,omitzero"`
+	// SoftBounced: Bounce events SES marked Transient
 	SoftBounced *int64 `json:"soft_bounced,omitzero"`
 	Complained  *int64 `json:"complained,omitzero"`
 	Failed      *int64 `json:"failed,omitzero"`
@@ -140,6 +169,8 @@ type BatchSendResponse struct {
 	Emails []BatchSendResponseEmailsItem `json:"emails"`
 	// Data: The same ids in Resend's batch response shape: one { id } per item, in request order.
 	Data []BatchSendResponseDataItem `json:"data"`
+	// Warnings: Present only when there is something to check. category_not_set lists in items the emails sent without a category, which went out as marketing.
+	Warnings []SendWarning `json:"warnings,omitzero"`
 }
 
 type BatchSendResponseDataItem struct {
@@ -292,7 +323,9 @@ type Broadcast struct {
 	// AudienceMeta: Details of the audience, such as the segment_id
 	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
 	// SegmentID: The segment the broadcast goes to when audience is segment, otherwise null
-	SegmentID   Nullable[string] `json:"segment_id,omitzero"`
+	SegmentID Nullable[string] `json:"segment_id,omitzero"`
+	// TopicID: The topic the broadcast belongs to: only contacts subscribed to it get it, and its unsubscribe link removes that topic only. null: every subscribed co
+	TopicID     Nullable[string] `json:"topic_id,omitzero"`
 	From        Nullable[string] `json:"from,omitzero"`
 	ReplyTo     Nullable[string] `json:"reply_to,omitzero"`
 	Subject     Nullable[string] `json:"subject,omitzero"`
@@ -334,7 +367,9 @@ type BroadcastDetail struct {
 	// AudienceMeta: Details of the audience, such as the segment_id
 	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
 	// SegmentID: The segment the broadcast goes to when audience is segment, otherwise null
-	SegmentID   Nullable[string] `json:"segment_id,omitzero"`
+	SegmentID Nullable[string] `json:"segment_id,omitzero"`
+	// TopicID: The topic the broadcast belongs to: only contacts subscribed to it get it, and its unsubscribe link removes that topic only. null: every subscribed co
+	TopicID     Nullable[string] `json:"topic_id,omitzero"`
 	From        Nullable[string] `json:"from,omitzero"`
 	ReplyTo     Nullable[string] `json:"reply_to,omitzero"`
 	Subject     Nullable[string] `json:"subject,omitzero"`
@@ -396,13 +431,18 @@ type BroadcastMetrics struct {
 	Queued  *int64 `json:"queued,omitzero"`
 	Sending *int64 `json:"sending,omitzero"`
 	// HandedOff: Recipients whose email the provider accepted, whatever happened next. Shows how far a send spread over send_over_minutes has got.
-	HandedOff       *int64   `json:"handed_off,omitzero"`
-	Sent            *int64   `json:"sent,omitzero"`
-	Delivered       *int64   `json:"delivered,omitzero"`
-	Opened          *int64   `json:"opened,omitzero"`
-	Clicked         *int64   `json:"clicked,omitzero"`
-	Unsubscribed    *int64   `json:"unsubscribed,omitzero"`
-	Bounced         *int64   `json:"bounced,omitzero"`
+	HandedOff    *int64 `json:"handed_off,omitzero"`
+	Sent         *int64 `json:"sent,omitzero"`
+	Delivered    *int64 `json:"delivered,omitzero"`
+	Opened       *int64 `json:"opened,omitzero"`
+	Clicked      *int64 `json:"clicked,omitzero"`
+	Unsubscribed *int64 `json:"unsubscribed,omitzero"`
+	// Bounced: Every bounce, hard plus soft.
+	Bounced *int64 `json:"bounced,omitzero"`
+	// HardBounced: Bounces SES marked Permanent or Undetermined: the address does not exist or does not take mail.
+	HardBounced *int64 `json:"hard_bounced,omitzero"`
+	// SoftBounced: Bounces SES marked Transient: a temporary failure such as a full mailbox.
+	SoftBounced     *int64   `json:"soft_bounced,omitzero"`
 	Complained      *int64   `json:"complained,omitzero"`
 	Failed          *int64   `json:"failed,omitzero"`
 	Canceled        *int64   `json:"canceled,omitzero"`
@@ -410,7 +450,12 @@ type BroadcastMetrics struct {
 	OpenRate        *float64 `json:"open_rate,omitzero"`
 	ClickRate       *float64 `json:"click_rate,omitzero"`
 	UnsubscribeRate *float64 `json:"unsubscribe_rate,omitzero"`
-	BounceRate      *float64 `json:"bounce_rate,omitzero"`
+	// BounceRate: Hard bounces only, as SES counts them: the same as hard_bounce_rate. Percent of recipients not skipped.
+	BounceRate *float64 `json:"bounce_rate,omitzero"`
+	// HardBounceRate: hard_bounced as a percent of recipients not skipped.
+	HardBounceRate *float64 `json:"hard_bounce_rate,omitzero"`
+	// SoftBounceRate: soft_bounced as a percent of recipients not skipped. Not part of bounce_rate.
+	SoftBounceRate *float64 `json:"soft_bounce_rate,omitzero"`
 }
 
 type BroadcastRecipientDetail struct {
@@ -450,7 +495,9 @@ type BroadcastSendResult struct {
 	// AudienceMeta: Details of the audience, such as the segment_id
 	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
 	// SegmentID: The segment the broadcast goes to when audience is segment, otherwise null
-	SegmentID   Nullable[string] `json:"segment_id,omitzero"`
+	SegmentID Nullable[string] `json:"segment_id,omitzero"`
+	// TopicID: The topic the broadcast belongs to: only contacts subscribed to it get it, and its unsubscribe link removes that topic only. null: every subscribed co
+	TopicID     Nullable[string] `json:"topic_id,omitzero"`
 	From        Nullable[string] `json:"from,omitzero"`
 	ReplyTo     Nullable[string] `json:"reply_to,omitzero"`
 	Subject     Nullable[string] `json:"subject,omitzero"`
@@ -643,11 +690,35 @@ type ContactSuppression struct {
 	CreatedAt string `json:"created_at"`
 }
 
+type ContactTopic struct {
+	// ID: The topic ID
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	// Subscription: The contact's choice, else the topic default
+	Subscription        string `json:"subscription"`
+	DefaultSubscription string `json:"default_subscription"`
+	Visibility          string `json:"visibility"`
+	// Source: Where the contact's choice was made; null when the default applies
+	Source *string `json:"source"`
+	// UpdatedAt: When the contact chose; null when the default applies
+	UpdatedAt *string `json:"updated_at"`
+}
+
+type ContactTopicList struct {
+	Object  string         `json:"object"`
+	HasMore bool           `json:"has_more"`
+	Data    []ContactTopic `json:"data"`
+	Total   int64          `json:"total"`
+}
+
 type CreateAPIKeyRequest struct {
 	// Name: A human-readable name for the key
 	Name string `json:"name"`
 	// Scopes: Optional list of scopes to restrict the key. Available: email:send, email:read, domain:read, domain:write, contact:read, contact:write, form:read, for
 	Scopes []string `json:"scopes,omitzero"`
+	// SMTPCategory: Not in Resend. The category of mail sent over SMTP with this key when the message has no X-SMTPfast-Category header. transactional: no List-Unsubscrib
+	SMTPCategory *string `json:"smtp_category,omitzero"`
 }
 
 type CreateActivationCheckoutParams struct {
@@ -679,6 +750,8 @@ type CreateBroadcastRequest struct {
 	SegmentID *string `json:"segment_id,omitzero"`
 	// AudienceMeta: Details of the audience, such as the segment_id
 	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
+	// TopicID: Resend-compatible. Only contacts subscribed to this topic get the broadcast (their own opt-in, or the topic default), and its unsubscribe link and one
+	TopicID Nullable[string] `json:"topic_id,omitzero"`
 	// TemplateID: Not in Resend, and only on create (PATCH ignores it). Start from a template (id or alias): its current content, as the template editor shows it, is co
 	TemplateID  *string          `json:"template_id,omitzero"`
 	From        *string          `json:"from,omitzero"`
@@ -686,9 +759,10 @@ type CreateBroadcastRequest struct {
 	Subject     *string          `json:"subject,omitzero"`
 	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Markdown: Markdown body. Must include {{unsubscribe_url}} or {{{RESEND_UNSUBSCRIBE_URL}}} before sending.
-	Markdown *string          `json:"markdown,omitzero"`
-	HTML     Nullable[string] `json:"html,omitzero"`
-	Text     Nullable[string] `json:"text,omitzero"`
+	Markdown *string `json:"markdown,omitzero"`
+	// HTML: HTML body, at most 100,000 characters. HTML with merge tags is parsed to place each value, so it must stay within 131,072 characters, 10,000 tags, 300
+	HTML Nullable[string] `json:"html,omitzero"`
+	Text Nullable[string] `json:"text,omitzero"`
 	// TrackOpens: Add the open-tracking pixel to each email. Available on every plan.
 	TrackOpens *bool `json:"track_opens,omitzero"`
 	// TrackClicks: Send each link through the click tracker. Available on every plan.
@@ -856,6 +930,10 @@ type CreateSignupFormRequest struct {
 	WelcomeEmailSubject Nullable[string] `json:"welcome_email_subject,omitzero"`
 	// WelcomeEmailMarkdown: Welcome email body as Markdown.
 	WelcomeEmailMarkdown Nullable[string] `json:"welcome_email_markdown,omitzero"`
+	// TopicID: A signup subscribes the contact to this topic only. Existing contacts can sign up too, and nothing else about them changes; a contact who unsubscribed
+	TopicID Nullable[string] `json:"topic_id,omitzero"`
+	// ConsentText: Shown under the form and stored with each topic opt-in.
+	ConsentText Nullable[string] `json:"consent_text,omitzero"`
 }
 
 type CreateSuppressionRequest struct {
@@ -883,7 +961,7 @@ type CreateTemplateRequest struct {
 	Subject Nullable[string] `json:"subject,omitzero"`
 	// ReplyTo: Default Reply-To address or addresses. A send can override it.
 	ReplyTo Nullable[StringList] `json:"reply_to,omitzero"`
-	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}.
+	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}. HTML with merge tags is parsed to place each va
 	HTML *string `json:"html,omitzero"`
 	// Text: Plain-text body. When left out, the text part is generated from the HTML at send time. Exactly "" stops that, as in Resend; the email then carries an
 	Text Nullable[string] `json:"text,omitzero"`
@@ -894,6 +972,17 @@ type CreateTemplateRequest struct {
 	// Category: Not in Resend. A label for grouping templates in the dashboard.
 	Category  Nullable[string]   `json:"category,omitzero"`
 	Variables []TemplateVariable `json:"variables,omitzero"`
+}
+
+type CreateTopicRequest struct {
+	Name        string           `json:"name"`
+	Description Nullable[string] `json:"description,omitzero"`
+	// DefaultSubscription: The subscription of a contact that never chose. Fixed at creation.
+	DefaultSubscription string `json:"default_subscription"`
+	// Visibility: public: on every contact's preference page. private: only on the page of contacts opted in.
+	Visibility *string `json:"visibility,omitzero"`
+	// SubscribeExistingContacts: Not in Resend. Only with default_subscription opt_out: opt in every contact who is subscribed and not suppressed now.
+	SubscribeExistingContacts *bool `json:"subscribe_existing_contacts,omitzero"`
 }
 
 type CreateWebhookRequest struct {
@@ -981,8 +1070,10 @@ type Domain struct {
 	Domain string `json:"domain"`
 	// Name: Same as domain. Resend calls this field name.
 	Name *string `json:"name,omitzero"`
-	// Status: GET /v1/domains/{id} answers pending for a verified domain whose required records are no longer live.
+	// Status: The stored status, which gates sending: verified once DKIM and the email provider identity are verified. POST /v1/domains/{id}/verify and the backgrou
 	Status string `json:"status"`
+	// DNSLive: GET /v1/domains/{id} only. True when every required record (DKIM, SPF, DMARC, MAIL FROM) matches a live lookup at the domain's own nameservers. A veri
+	DNSLive *bool `json:"dns_live,omitzero"`
 	// Receiving: Inbound email for the domain
 	Receiving           *DomainReceiving `json:"receiving,omitzero"`
 	VerificationPhase   *string          `json:"verification_phase,omitzero"`
@@ -1216,6 +1307,7 @@ type GetAnalyticsQuery struct {
 
 type GetBroadcastAudienceQuery struct {
 	SegmentID *string `json:"segment_id,omitzero"`
+	TopicID   *string `json:"topic_id,omitzero"`
 }
 
 type GetCapabilitiesResponse struct {
@@ -1284,8 +1376,10 @@ type GetEmailMetricsQuery struct {
 }
 
 type GetEmailMetricsResponse struct {
-	Object      string   `json:"object"`
-	StartDate   string   `json:"start_date"`
+	Object string `json:"object"`
+	// StartDate: The resolved start of the range, as a UTC instant (inclusive)
+	StartDate string `json:"start_date"`
+	// EndDate: The resolved end of the range, as a UTC instant (exclusive)
 	EndDate     string   `json:"end_date"`
 	Timezone    string   `json:"timezone"`
 	Metrics     []string `json:"metrics"`
@@ -1742,6 +1836,7 @@ type ListContactsQuery struct {
 	Status     *string `json:"status,omitzero"`
 	Disposable *bool   `json:"disposable,omitzero"`
 	SegmentID  *string `json:"segment_id,omitzero"`
+	TopicID    *string `json:"topic_id,omitzero"`
 	Limit      *int64  `json:"limit,omitzero"`
 	Page       *int64  `json:"page,omitzero"`
 }
@@ -1983,9 +2078,14 @@ type MailboxProviderMetrics struct {
 	// Share: Percent of all sent email in the breakdown.
 	Share float64 `json:"share"`
 	// Delivered: Accepted by the receiving server, complained included.
-	Delivered  int64 `json:"delivered"`
-	Bounced    int64 `json:"bounced"`
-	Complained int64 `json:"complained"`
+	Delivered int64 `json:"delivered"`
+	// Bounced: Every bounce, hard plus soft.
+	Bounced int64 `json:"bounced"`
+	// HardBounced: Bounces SES marked Permanent or Undetermined.
+	HardBounced *int64 `json:"hard_bounced,omitzero"`
+	// SoftBounced: Bounces SES marked Transient, such as a full mailbox.
+	SoftBounced *int64 `json:"soft_bounced,omitzero"`
+	Complained  int64  `json:"complained"`
 	// TrackedDelivered: Delivered with open tracking on: the open rate's denominator.
 	TrackedDelivered int64 `json:"tracked_delivered"`
 	// Opened: Of tracked_delivered, opened at least once.
@@ -1994,8 +2094,10 @@ type MailboxProviderMetrics struct {
 	DeliveryRate *float64 `json:"delivery_rate"`
 	// OpenRate: opened / tracked_delivered. Apple Mail Privacy Protection loads the open pixel before anyone reads the email, so the icloud rate reads high.
 	OpenRate *float64 `json:"open_rate"`
-	// BounceRate: bounced / (delivered + bounced).
+	// BounceRate: hard_bounced / (delivered + bounced): hard bounces only, as SES counts them.
 	BounceRate *float64 `json:"bounce_rate"`
+	// SoftBounceRate: soft_bounced / (delivered + bounced). Not part of bounce_rate.
+	SoftBounceRate Nullable[float64] `json:"soft_bounce_rate,omitzero"`
 	// ComplaintRate: complained / delivered.
 	ComplaintRate *float64 `json:"complaint_rate"`
 }
@@ -2319,7 +2421,7 @@ type SendBroadcastTestResponse struct {
 type SendEmailRequest struct {
 	// Template: Send a published template instead of html and text, as in Resend. The published version is rendered with the variables, then every normal send rule ap
 	Template *SendEmailRequestTemplate `json:"template,omitzero"`
-	// Attachments: Up to 10 files, base64 encoded, 25 MB per message in total. A content_id makes the part inline: reference it from the HTML as cid:<content_id>.
+	// Attachments: Up to 10 files, base64 encoded, 10 MB each and 25 MB per message in total (413 over a limit). A content_id makes the part inline: reference it from th
 	Attachments []SendEmailRequestAttachmentsItem `json:"attachments,omitzero"`
 	// From: Sender email address (must belong to a verified domain)
 	From *string `json:"from,omitzero"`
@@ -2347,7 +2449,7 @@ type SendEmailRequest struct {
 	TrackOpens *bool `json:"track_opens,omitzero"`
 	// HTML: HTML body of the email. Include `{{unsubscribe_url}}` (or the Resend-compatible `{{{RESEND_UNSUBSCRIBE_URL}}}`) anywhere in the body and SMTPfast subs
 	HTML *string `json:"html,omitzero"`
-	// Text: Plain text fallback body. Supports the same `{{unsubscribe_url}}` placeholder as the HTML body.
+	// Text: Plain text fallback body. Supports the same `{{unsubscribe_url}}` placeholder as the HTML body. When left out, a text part is generated from the html:
 	Text *string `json:"text,omitzero"`
 }
 
@@ -2378,6 +2480,8 @@ type SendEmailRequestTemplate struct {
 // SendEmailResponse: The id of the accepted email, as Resend returns it. Fetch the email with GET /v1/emails/{id}.
 type SendEmailResponse struct {
 	ID string `json:"id"`
+	// Warnings: Not in Resend. Present only when the send was accepted with something to check. category_not_set: the request had no category (and no X-SMTPfast-Categ
+	Warnings []SendWarning `json:"warnings,omitzero"`
 }
 
 type SendInboxDraftParams struct {
@@ -2394,6 +2498,13 @@ type SendInboxDraftResponse struct {
 	SentRevision *int64 `json:"sent_revision,omitzero"`
 	// Warning: Present when the email went out but the draft changed or was claimed again while the send ran, so it was not marked sent. Not in Resend.
 	Warning *string `json:"warning,omitzero"`
+}
+
+type SendWarning struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	// Items: Batch sends only: the indexes of the items the warning is about, in request order.
+	Items []int64 `json:"items,omitzero"`
 }
 
 type ShareEmailParams struct {
@@ -2434,6 +2545,10 @@ type SignupForm struct {
 	WelcomeEmailSubject Nullable[string] `json:"welcome_email_subject,omitzero"`
 	// WelcomeEmailMarkdown: Create, retrieve and update return it; list items leave it out.
 	WelcomeEmailMarkdown Nullable[string] `json:"welcome_email_markdown,omitzero"`
+	// TopicID: The topic a signup subscribes the contact to, or null.
+	TopicID Nullable[string] `json:"topic_id,omitzero"`
+	// ConsentText: Shown under the form and stored with each topic opt-in.
+	ConsentText Nullable[string] `json:"consent_text,omitzero"`
 	// WelcomeStats: Welcome emails sent and skipped for this form, and how many were delivered, opened and clicked. List items leave it out.
 	WelcomeStats *SignupFormWelcomeStats `json:"welcome_stats,omitzero"`
 	// PendingConfirmationsCount: Signups waiting on their confirmation click. List items leave it out.
@@ -2661,17 +2776,50 @@ type TestWebhookResponse struct {
 	Delivery *WebhookDelivery `json:"delivery,omitzero"`
 }
 
+type Topic struct {
+	Object      string  `json:"object"`
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	// DefaultSubscription: The subscription of a contact that never chose. Fixed at creation.
+	DefaultSubscription string `json:"default_subscription"`
+	// Visibility: public: on every contact's preference page. private: only on the page of contacts opted in.
+	Visibility string `json:"visibility"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+	// SubscribedContacts: Create only, when subscribe_existing_contacts was true: how many contacts were opted in.
+	SubscribedContacts *int64 `json:"subscribed_contacts,omitzero"`
+}
+
+type TopicList struct {
+	Object string `json:"object"`
+	// HasMore: Always false: every topic is in one page
+	HasMore    bool           `json:"has_more"`
+	Data       []TopicSummary `json:"data"`
+	Total      int64          `json:"total"`
+	TopicLimit int64          `json:"topic_limit"`
+	// SubscribedContacts: Contacts subscribed and not suppressed now: what subscribe_existing_contacts would opt in to a new topic.
+	SubscribedContacts int64 `json:"subscribed_contacts"`
+}
+
+type TopicSummary struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	// DefaultSubscription: The subscription of a contact that never chose. Fixed at creation.
+	DefaultSubscription string `json:"default_subscription"`
+	// Visibility: public: on every contact's preference page. private: only on the page of contacts opted in.
+	Visibility string `json:"visibility"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
 type UpdateAPIKeyParams struct {
 	Name *string `json:"name,omitzero"`
 	// Scopes: Replaces the key's scopes
 	Scopes []string `json:"scopes,omitzero"`
-}
-
-type UpdateAPIKeyResponse struct {
-	ID        *string  `json:"id,omitzero"`
-	Name      *string  `json:"name,omitzero"`
-	KeyPrefix *string  `json:"keyPrefix,omitzero"`
-	Scopes    []string `json:"scopes,omitzero"`
+	// SMTPCategory: Not in Resend. The category of mail sent over SMTP with this key when the message has no X-SMTPfast-Category header. transactional: no List-Unsubscrib
+	SMTPCategory *string `json:"smtp_category,omitzero"`
 }
 
 type UpdateBroadcastRequest struct {
@@ -2681,6 +2829,8 @@ type UpdateBroadcastRequest struct {
 	SegmentID *string `json:"segment_id,omitzero"`
 	// AudienceMeta: Details of the audience, such as the segment_id
 	AudienceMeta map[string]any `json:"audience_meta,omitzero"`
+	// TopicID: Resend-compatible. Only contacts subscribed to this topic get the broadcast (their own opt-in, or the topic default), and its unsubscribe link and one
+	TopicID Nullable[string] `json:"topic_id,omitzero"`
 	// TemplateID: Not in Resend, and only on create (PATCH ignores it). Start from a template (id or alias): its current content, as the template editor shows it, is co
 	TemplateID  *string          `json:"template_id,omitzero"`
 	From        *string          `json:"from,omitzero"`
@@ -2688,9 +2838,10 @@ type UpdateBroadcastRequest struct {
 	Subject     *string          `json:"subject,omitzero"`
 	PreviewText Nullable[string] `json:"preview_text,omitzero"`
 	// Markdown: Markdown body. Must include {{unsubscribe_url}} or {{{RESEND_UNSUBSCRIBE_URL}}} before sending.
-	Markdown *string          `json:"markdown,omitzero"`
-	HTML     Nullable[string] `json:"html,omitzero"`
-	Text     Nullable[string] `json:"text,omitzero"`
+	Markdown *string `json:"markdown,omitzero"`
+	// HTML: HTML body, at most 100,000 characters. HTML with merge tags is parsed to place each value, so it must stay within 131,072 characters, 10,000 tags, 300
+	HTML Nullable[string] `json:"html,omitzero"`
+	Text Nullable[string] `json:"text,omitzero"`
 	// TrackOpens: Add the open-tracking pixel to each email. Available on every plan.
 	TrackOpens *bool `json:"track_opens,omitzero"`
 	// TrackClicks: Send each link through the click tracker. Available on every plan.
@@ -2717,6 +2868,22 @@ type UpdateContactRequest struct {
 	Properties   map[string]any `json:"properties,omitzero"`
 	// SegmentIDs: Replace this contact's manual segment assignments
 	SegmentIDs []string `json:"segment_ids,omitzero"`
+}
+
+type UpdateContactTopicsRequest struct {
+	Topics []UpdateContactTopicsRequestTopicsItem `json:"topics"`
+}
+
+type UpdateContactTopicsRequestTopicsItem struct {
+	// ID: The topic ID
+	ID           string `json:"id"`
+	Subscription string `json:"subscription"`
+}
+
+type UpdateContactTopicsResponse struct {
+	Object string `json:"object"`
+	// ID: The contact ID
+	ID string `json:"id"`
 }
 
 type UpdateDomainReceivingParams struct {
@@ -2833,6 +3000,10 @@ type UpdateSignupFormRequest struct {
 	WelcomeEmailSubject Nullable[string] `json:"welcome_email_subject,omitzero"`
 	// WelcomeEmailMarkdown: Welcome email body as Markdown.
 	WelcomeEmailMarkdown Nullable[string] `json:"welcome_email_markdown,omitzero"`
+	// TopicID: A signup subscribes the contact to this topic only. Existing contacts can sign up too, and nothing else about them changes; a contact who unsubscribed
+	TopicID Nullable[string] `json:"topic_id,omitzero"`
+	// ConsentText: Shown under the form and stored with each topic opt-in.
+	ConsentText Nullable[string] `json:"consent_text,omitzero"`
 }
 
 type UpdateTeamMemberParams struct {
@@ -2851,7 +3022,7 @@ type UpdateTemplateRequest struct {
 	Subject Nullable[string] `json:"subject,omitzero"`
 	// ReplyTo: Default Reply-To address or addresses. A send can override it.
 	ReplyTo Nullable[StringList] `json:"reply_to,omitzero"`
-	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}.
+	// HTML: The HTML body. Variables are written {{{KEY}}}, optionally with an inline fallback: {{{KEY|default}}}. HTML with merge tags is parsed to place each va
 	HTML Nullable[string] `json:"html,omitzero"`
 	// Text: Plain-text body. When left out, the text part is generated from the HTML at send time. Exactly "" stops that, as in Resend; the email then carries an
 	Text Nullable[string] `json:"text,omitzero"`
@@ -2864,6 +3035,13 @@ type UpdateTemplateRequest struct {
 	Variables Nullable[[]TemplateVariable] `json:"variables,omitzero"`
 	// ExpectedUpdatedAt: Not in Resend. The updated_at you loaded. If the template changed since, the update is refused with 409 revision_conflict instead of overwriting the n
 	ExpectedUpdatedAt *string `json:"expected_updated_at,omitzero"`
+}
+
+type UpdateTopicRequest struct {
+	Name        *string          `json:"name,omitzero"`
+	Description Nullable[string] `json:"description,omitzero"`
+	// Visibility: public: on every contact's preference page. private: only on the page of contacts opted in.
+	Visibility *string `json:"visibility,omitzero"`
 }
 
 type UpdateWebhookRequest struct {
